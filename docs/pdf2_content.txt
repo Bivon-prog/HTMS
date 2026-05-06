@@ -1,0 +1,80 @@
+Ministry of Foreign and Diaspora Affairs of Kenya
+ Global Ticket System — Design Discussion Notes
+ 
+1. Project Overview
+The Ministry of Foreign and Diaspora Affairs of Kenya is planning a staff-facing internal helpdesk ticket
+system to serve its 70 missions worldwide — including embassies, high commissions, and consulates. The
+first version will be for internal staff use only, with a future version planned to extend access to Kenyan
+citizens abroad.
+2. Two-Tier Resolution Model
+Tickets will be handled at two levels depending on the nature of the issue:
+Tier
+Who Handles
+Example Issues
+Tier 1 — Local
+Mission staff on-site
+Basic IT, local HR matters, facility/admin issues
+Tier 2 — HQ Nairobi
+Ministry HQ departments
+Email/account recovery, payroll, policy decisions
+3. Time Zone Management
+With 70 missions spanning multiple continents, time zone handling is one of the key technical challenges.
+The following approach was identified:
+Core principle:
+ All timestamps stored in UTC in the database.
+ Each mission and user has a configured local time zone.
+ The system displays times in the user's local time zone.
+ SLAs for escalated (Tier 2) tickets are calculated based on HQ Nairobi business hours.
+ Tier 1 ticket SLAs run on the mission's local working hours.
+Example: A ticket submitted from Tokyo is escalated to HQ. The system communicates the expected
+resolution time in Tokyo local time, calculated from Nairobi business hours.
+4. Escalation Logic
+Two escalation triggers have been defined:
+4.1 Automatic Escalation
+ A countdown timer tracks unresolved tickets based on the mission's local business hours.
+ If the timer expires, the ticket is automatically moved to the HQ department queue.
+ Both HQ and the originating mission are notified.
+ The SLA clock resets or continues based on Nairobi HQ business hours.
+ Different ticket categories have different escalation thresholds (e.g., email/account issues escalate
+faster than general HR matters).
+
+4.2 Manual Escalation
+ The mission focal person can manually escalate a ticket to HQ at any time.
+ A reason or note must be provided before escalation.
+ HQ is notified immediately regardless of time.
+ The full ticket history, attachments, and notes travel with the escalated ticket.
+Sample escalation thresholds (proposed):
+Ticket Category
+Auto-Escalate After
+General IT Issue
+48 mission business hours
+Email / Account Access
+4 hours
+HR Matter
+72 mission business hours
+5. Role-Based Access & Visibility
+The system uses role-based visibility to ensure each user sees only relevant tickets:
+Role
+Ticket Visibility
+Mission Staff
+Only their own submitted tickets
+Mission Focal Person
+All tickets from their mission
+HQ Department (IT, HR, Finance, etc.)
+Only tickets routed to their department
+System Administrator
+Everything across all 70 missions
+6. Smart Ticket Routing at Escalation
+When a ticket is escalated to HQ, the system automatically routes it to the correct department based on its
+category. For example, an 'Email Recovery' ticket is routed directly to the IT department queue — Finance
+or HR never see it.
+Open design questions to resolve:
+ Miscategorized tickets — how does an HQ department reroute a ticket to the correct department?
+ Cross-department tickets — can a ticket belong to or be shared between multiple departments?
+ Mission Focal Person — is there one per mission, or can there be multiple focal persons by
+department?
+7. Future Roadmap
+Version 2 of the system is planned to include public-facing access for Kenyan citizens abroad, enabling
+them to submit consular and diaspora service requests directly through the platform.
+Document generated from design discussion — Ministry of Foreign and Diaspora Affairs of Kenya Ticket System Project
+

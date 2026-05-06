@@ -1,0 +1,442 @@
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 1 of 13  
+REPUBLIC OF KENYA  
+Ministry of Foreign and Diaspora Affairs  
+ 
+HELPDESK TICKET 
+MANAGEMENT SYSTEM  
+Software Requirements Specification (SRS)  
+ 
+Prepared by  
+BIVON MORIASI ONYONI  
+ICT Attache  —  Ministry of Foreign and Diaspora Affairs  
+Version 1.0   |   May 2026   |   Classification: Internal  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 2 of 13  
+1. Introduction  
+1.1 Purpose  
+This document defines the functional and non -functional requirements for the Helpdesk Ticket 
+Management System (HTMS) to be deployed by the Ministry of Foreign and Diasp ora Affairs of 
+the Republic of Kenya. The system will support all 70 Kenyan diplomatic missions worldwide, 
+enabling staff to raise, track, and resolve issues across IT, HR, and facilities departments from a 
+centralised platform.  
+ 
+1.2 Scope  
+The HTMS will be a web -based application accessible from any modern browser. It will serve 
+three categories of users — mission staff, departmental agents/technicians, and HQ 
+administrators — and will provide structured, category -routed ticket management wi th real -time 
+notifications and executive reporting dashboards.  
+ 
+1.3 Definitions & Acronyms  
+Term / Acronym  Definition  
+HTMS  Helpdesk Ticket Management System — the system being specified in 
+this document.  
+Mission  A Kenyan embassy, high commission, or consulate operating outside 
+Kenya.  
+HQ Ministry of Foreign and Diaspora Affairs headquarters, Nairobi, Kenya.  
+Agent  A staff member responsible for resolving tickets within a specific 
+department (IT, HR, Facilities).  
+Requester  Any mission staff member who submits a ticket.  
+SLA Service Level Agreement — the defined timeframe within which a ticket 
+should be resolved.  
+SRS Software Requirements Specification — this document.  
+ 
+2. Stakeholders & User Roles  
+The system will serve four distinct user roles, each with different access levels and capabilities:  
+ 
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 3 of 13 Role  Where They Operate  Key Responsibilities  
+Requester  Any of the 70 Missions  Submit tickets, provide updates, confirm 
+resolution, view own ticket history.  
+Agent / Technician  Mission or HQ 
+Department  View, assign, update, and resolve tickets routed 
+to their department.  
+Mission Admin  Specific Mission  Manage mission users, view all tickets within 
+their mission, generate mission -level reports.  
+HQ Super Admin  HQ — Nairobi  Full system access: manage missions, 
+departments, users, SLAs, system settings, and 
+view global dashboards.  
+ 
+3. Functional Requirements  
+3.1 User Authentication & Access Control  
+• All users shall authenticate via a secure login (username and password) with support for 
+password reset via email.  
+• Role-Based Access Control (RBAC) shall enforce that each user sees only w hat their 
+role permits.  
+• Mission isolation: staff at a given mission can only view and interact with tickets 
+belonging to their mission.  
+• HQ Super Admins can view and manage all missions, tickets, and users system -wide.  
+• Sessions shall expire after a configur able period of inactivity (default: 30 minutes).  
+• The system shall support multi -factor authentication (MFA) as an optional enhancement.  
+ 
+3.2 Ticket Submission  
+• Any authenticated Requester shall be able to submit a new ticket via a web form.  
+• Ticket submission form shall capture: Title, Description, Category (IT / HR / Facilities / 
+Other), Priority (Low / Medium / High / Critical), Attachments (images, documents — 
+max 10MB per file).  
+• Upon submission, the system shall auto -assign a unique ticket  ID and timestamp.  
+• The ticket shall be automatically routed to the appropriate departmental queue based on 
+the selected category.  
+• Requesters shall receive an immediate email and in -app notification confirming ticket 
+submission with the ticket ID.  
+ 
+3.3 Tick et Status Lifecycle  
+Every ticket shall progress through the following defined states:  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 4 of 13  
+Status  Description  
+Open  Ticket has been submitted and is awaiting assignment to an agent.  
+Assigned  Ticket has been assigned to a specific agent or technician.  
+In Progress  The assigned agent is actively working on the ticket.  
+Resolved  Agent has marked the issue as resolved; awaiting Requester confirmation.  
+Closed  Ticket is fully closed — either confirmed by Requester or auto -closed after 3 
+business days without a response.  
+ 
+• Only authorised roles (Agents, Mission Admin, HQ Admin) may change ticket status.  
+• Status change history (audit trail) shall be logged with timestamp and user for every 
+transition.  
+ 
+3.4 Ticket Routing & Assignment  
+• Upon submission, tickets shall be automatically routed to the relevant departmental 
+queue: IT tickets to IT team, HR tickets to HR team, Facilities tickets to Facilities team.  
+• Agents may be assigned tickets manually by Mission Admin or HQ Admin, or via auto -
+assignment (round -robin within department).  
+• Agents can reassign tickets to other agents within the same department.  
+• Escalat ion: tickets not assigned within a configurable period shall be escalated and 
+flagged for Mission Admin review.  
+ 
+3.5 Ticket Collaboration & Comments  
+• Agents and Requesters shall be able to add comments/updates to a ticket thread.  
+• All comments shall be times tamped and attributed to the user who added them.  
+• Internal notes visible only to Agents and Admins (not the Requester) shall be supported.  
+• File attachments may be added to comments.  
+ 
+3.6 Audit Trail  
+Every ticket shall maintain a permanent, unchangeable aud it log capturing all actions taken on it 
+throughout its lifecycle. This ensures full accountability and transparency across all 70 missions.  
+ 
+Action Logged  Details Captured  
+Ticket Created  Who submitted it, timestamp, mission, category, and initial 
+priority.  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 5 of 13 Ticket Assigned  Who assigned it, to which agent, and the timestamp of 
+assignment.  
+Status Changed  Previous status, new status, who made the change, and 
+timestamp.  
+Comment Added  Author, timestamp, and whether the comment was internal or 
+public.  
+Ticket Reassigned  Previous agent, new agent, who performed the reassignment, 
+and timestamp.  
+Ticket Resolved  Who marked it resolved, resolution notes, and timestamp.  
+Ticket Closed  Whether closed by Requester confirmation or auto -closed, with 
+timestamp.  
+ 
+• Audit logs shall be read -only — no user, including HQ Super Admins, shall be able to 
+edit or delete log entries.  
+• The full audit trail shall be visible to Agents, Mission Admins, and HQ Super Admins on 
+each ticket's detail page.  
+• Requesters shall see a simplified activity timeline (status changes and public comments 
+only) — not internal notes or admin actions.  
+• Audit lo gs shall be retained for a minimum of 5 years in accordance with government 
+record -keeping requirements.  
+• Logs shall be exportable per ticket or in bulk (by mission, date range, or category) by HQ 
+Super Admins for compliance and reporting purposes.  
+ 
+3.7 Not ifications  
+• The system shall send both in -app and email notifications for the following events:  
+• New ticket submitted (to Agent/Admin of relevant department).  
+• Ticket assigned to an agent (to that agent).  
+• Ticket status changed (to Requester).  
+• New comment added to a ticket (to all parties involved).  
+• Ticket resolved (to Requester, prompting confirmation).  
+• SLA breach warning (to Mission Admin and HQ Admin).  
+• Notification preferences shall be configurable per user (opt -in/opt -out per event type).  
+ 
+3.8 Search & Filtering  
+• All users shall be able to search tickets by ticket ID, keyword, category, status, or date 
+range — within their permitted scope.  
+• Agents and Admins shall be able to filter ticket queues by status, priority, category, and 
+assigned agent . 
+• Search results shall be paginated and sortable.  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 6 of 13  
+3.9 HQ Dashboard & Reporting  
+• HQ Super Admins shall have access to a global analytics dashboard displaying:  
+• Total open, in -progress, resolved, and closed tickets across all missions.  
+• Ticket volume by missio n, department, and category.  
+• Average resolution time per department and per mission.  
+• SLA compliance rate (% of tickets resolved within SLA).  
+• Trend charts (weekly/monthly ticket volume over time).  
+• Agents and Mission Admins shall have access to mission -level reports limited to their 
+mission.  
+• Reports shall be exportable as PDF or CSV.  
+ 
+4. Advanced Functional Requirements  
+The following requirements address the complex operational realities of running a  diplomatic 
+helpdesk across 70 globally distributed missions. These go beyond basic ticketing and are 
+critical for the system to function correctly in a real -world Ministry environment.  
+ 
+4.1 Complex SLA Calendars & Localised Working Hours  
+Standard countdow n timers cannot be used for SLA management across missions operating in 
+different countries with different working weeks and public holidays.  
+ 
+• The Problem: The working week in Riyadh and Doha missions is Sunday to Thursday, 
+while London and Washington oper ate Monday to Friday. Missions also observe both 
+Kenyan public holidays (e.g., Jamhuri Day, Madaraka Day) and the official public 
+holidays of their host country.  
+• Each mission shall be configured with its own localised working hours schedule 
+specifying: wor king days of the week, daily start and end times, and the mission local 
+timezone.  
+• The SLA countdown timer shall automatically pause outside of the mission configured 
+working hours including nights, weekends as defined per mission, and public holidays.  
+• The system shall maintain a dynamic holiday calendar per country, configurable by HQ 
+Super Admins and updateable annually.  
+• SLA breach warnings and escalations shall only trigger during active working hours for 
+the relevant mission.  
+• The SLA configuration dashbo ard shall display per mission: effective working hours, 
+active timezone, and next upcoming public holiday.  
+ 
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 7 of 13 Mission Region  Working Week  Example Public Holidays  
+Gulf States (Riyadh, Doha, 
+Dubai)  Sunday to Thursday  Eid Al -Fitr, Saudi National Day, 
+UAE National Day  
+Europe & Americas (London, 
+Washington, Paris)  Monday to Friday  Christmas, Thanksgiving (US), 
+Bastille Day (FR)  
+Africa (Nairobi HQ, Addis 
+Ababa, Cairo)  Monday to Friday  Jamhuri Day, Madaraka Day, 
+Eid Al -Adha  
+Asia (Beijing, New Delhi, 
+Tokyo)  Monday to Friday  Chinese New Year, Diwali, 
+Golden Week  
+ 
+4.2 Asset & Inventory Linking  
+Tickets that lack device context create unnecessary back -and-forth between requesters and 
+agents, slowing down resolution times.  
+ 
+• The system shall include an Asset Management module maintaining a register of all 
+government -owned devices and equipment per m ission.  
+• Each asset record shall capture: Government Inventory Tag (e.g., MFA -LPT-204), 
+Device Type, Make and Model, Operating System and Version, Location within the 
+mission, Assigned User, Purchase Date, and Warranty Expiry.  
+• When submitting a ticket, a Re quester shall be able to search for and link the specific 
+asset using the inventory tag or device name.  
+• Upon linking an asset to a ticket, the responding agent shall immediately see the full 
+asset profile without needing to ask follow -up questions.  
+• Mission  Admins and HQ Super Admins shall be able to add, edit, and decommission 
+assets in the register.  
+• The system shall flag assets that are out of warranty or have a history of more than 3 
+tickets in 90 days as candidates for replacement.  
+• Asset history shall sh ow all tickets ever raised against a specific device.  
+ 
+4.3 Out -of-Office & Delegation Workflows  
+Senior diplomatic officials including High Commissioners, Ambassadors, and the Principal 
+Secretary are frequently travelling and unavailable for approvals, which can stall critical tickets.  
+ 
+• The system shall support a delegation feature that allows any use r with approval 
+authority to temporarily transfer that authority to a designated deputy.  
+• When setting up a delegation, the user shall specify: the deputy, the start and end date 
+of the delegation, and the scope such as all approvals or limited to specific categories 
+like procurement or access requests.  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 8 of 13 • During an active delegation period, all approval requests that would normally route to the 
+delegating official shall be automatically redirected to the designated deputy.  
+• Both the original approver and the de puty shall receive a notification when a delegation 
+is activated and when it expires.  
+• The audit trail shall record all approvals made under a delegation, clearly indicating the 
+action was taken on behalf of the original authority.  
+• HQ Super Admins shall be able to view and manage all active delegations across all 
+missions.  
+• A delegation may be cancelled early by the original user or by an Admin if the official 
+returns ahead of schedule.  
+ 
+4.4 Secure File Handling & Attachment Sanitisation  
+Government networks a re high -value targets. File uploads are a common attack vector for 
+delivering malicious payloads disguised as legitimate documents or images.  
+ 
+• All file attachments shall be strictly limited by MIME type. Only the following formats shall 
+be accepted: PDF, J PEG, PNG, and Microsoft Word (.docx). No executable, script, or 
+archive files shall be permitted under any circumstance.  
+• Individual file size shall be capped at 10MB per attachment, with a maximum of 5 
+attachments per ticket.  
+• The system shall validate MIME  type on the server side, not solely based on file 
+extension, to prevent spoofed file types.  
+• In the production environment, all uploaded files shall be routed through an automated 
+virus -scanning pipeline (e.g., ClamAV or equivalent) before being written to  storage.  
+• Files that fail the virus scan shall be rejected, the upload blocked, the incident logged in 
+the audit trail, and the Mission Admin and HQ Security team notified immediately.  
+• Stored attachments shall not be publicly accessible via direct URL. All  downloads shall 
+be served through authenticated, time -limited signed links.  
+ 
+4.5 Localisation & Internationalisation (i18n)  
+Kenyan missions employ Locally Engaged Staff (LES) including drivers, maintenance crews, 
+local IT contractors, and administrative s taff who may not be fluent in English. Requiring 
+English -only access excludes these staff from using the system effectively.  
+ 
+• The user -facing ticket submission portal shall support Internationalisation (i18n), 
+enabling the interface to toggle to a preferre d language.  
+• Version 1.0 shall support the following languages in addition to English: French 
+(Francophone Africa and Paris), Arabic (Middle East and North Africa), and Mandarin 
+Chinese (Beijing mission).  
+• Language selection shall be available on the login screen and in the user profile settings.  
+• Core interface elements to be translated include: navigation menus, form labels, status 
+labels, notification messages, and error messages.  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 9 of 13 • Ticket content (titles, descriptions, and comments) shall remain in the language the user 
+types. The system shall not auto -translate content.  
+• Agent and Admin interfaces shall remain in English for version 1.0. Localisation of those 
+interfaces may be consid ered in future versions.  
+• The system architecture shall use a standard i18n framework such as i18next to allow 
+additional languages to be added in future without code refactoring.  
+ 
+4.6 On -Behalf -Of (OBO) Ticketing  
+High-ranking officials such as Ambassadors,  High Commissioners, and the Principal Secretary 
+do not typically interact directly with operational systems. Their administrative assistants and 
+protocol officers act as their primary interface.  
+ 
+• The system shall provide an On -Behalf -Of (OBO) ticketing fe ature, allowing authorised 
+administrative assistants or protocol officers to submit and manage tickets in the name 
+of a senior official.  
+• OBO relationships shall be configured by Mission Admins or HQ Super Admins. A staff 
+member must be explicitly authorise d to act on behalf of a specific official.  
+• When submitting an OBO ticket, the assistant shall select the official from a pre -
+approved list. The ticket shall display both names, for example: Submitted by Ms. 
+Achieng on behalf of H.E. Ambassador Kamau.  
+• OBO t ickets shall automatically inherit the priority level associated with the senior official 
+role. Tickets submitted on behalf of an Ambassador or Principal Secretary shall be 
+flagged as High or Critical priority by default.  
+• The official on whose behalf a tic ket was raised shall receive all notifications related to 
+that ticket, in addition to the submitting assistant.  
+• All OBO actions shall be fully recorded in the audit trail, clearly distinguishing between 
+the submitting assistant and the named official.  
+• The senior official shall retain the ability to log in independently and view all tickets 
+raised on their behalf.  
+ 
+5. Non -Functional Requirements  
+5.1 Performance  
+• The system shall support at least 500 concurrent users across all missions.  
+• Page load time shall n ot exceed 3 seconds on a standard broadband connection.  
+• Ticket submission and status updates shall be reflected in the system within 5 seconds.  
+ 
+5.2 Availability & Reliability  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 10 of 13 • The system shall target 99.5% uptime (approximately 43 hours downtime per year 
+maximum).  
+• Scheduled maintenance windows shall be communicated at least 48 hours in advance.  
+• Automated database backups shall occur daily, with the ability to restore within 4 hours.  
+ 
+5.3 Security  
+• All data in transit shall be encrypted using TLS 1.2 or higher (HTTPS).  
+• All data at rest shall be encrypted using AES -256 or equivalent.  
+• The system shall comply with data protection best practices (minimal data collection, 
+access logging, user consent).  
+• All user actions shall be logged for audit purposes with timestamps and IP addresses.  
+• The system shall be protected against common web vulnerabilities (OWASP Top 10) 
+including SQL injection, XSS, and CSRF.  
+ 
+5.4 Usability  
+• The interface shall be accessible via  any modern web browser (Chrome, Firefox, Edge, 
+Safari) without requiring plugin installation.  
+• The system shall be mobile -responsive for access on tablets and smartphones.  
+• The agent and admin interfaces shall use English as the primary language. The user -
+facing submission portal shall support French, Arabic, and Mandarin in addition to 
+English, as defined in Section 4.5.  
+• All key user workflows (submit ticket, update status, view dashboard) shall be 
+completable within 3 clicks/steps.  
+ 
+5.5 Scalability  
+• The sys tem architecture shall support scaling to accommodate additional missions 
+beyond the initial 70 without major re -architecture.  
+• The database design shall handle a growing ticket archive without performance 
+degradation.  
+ 
+6. System Architecture Overview  
+The HTMS shall follow a three -tier architecture:  
+ 
+Layer  Description  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 11 of 13 Frontend  Web-based interface (browser). Responsive design for desktop and 
+mobile. Communicates with backend via REST API.  
+Backend / API  Server -side application handling business logic, authentication, routing, 
+notifications, and reporting.  
+Database  Relational database storing users, missions, tickets, comments, audit 
+logs, and configuration.  
+ 
+The system shall be hosted on a cloud or government -approved server infrastructure with the 
+ability to be accessed from any geographic location where missions operate.  
+ 
+7. Key Entities & Data Model  
+The following core entities shall be managed by the system : 
+ 
+Entity  Key Attributes  
+Mission  Mission ID, Name, Country, City, Region, Status (Active/Inactive).  
+User User ID, Full Name, Email, Role, Mission, Department, Status, Created 
+Date.  
+Ticket  Ticket ID, Title, Description, Category, Priority, Status, Requester, 
+Assigned Agent, Mission, Created Date, Last Updated, Resolved Date.  
+Comment  Comment ID, Ticket ID, Author, Content, Timestamp, Is Internal (boolean), 
+Attachments.  
+Notification  Notification ID, User ID, Event Type, Message, Delivery Channels, Sent 
+Timestamp, Read Status.  
+Audit Log  Log ID, User ID, Action, Entity Type, Entity ID, Timestamp, IP Address.  
+ 
+8. Constraints & Assumptions  
+8.1 Constraints  
+• Agent and Admin interfaces operate in English only. The submission portal supports 
+English, French, Arabic, and Mandarin as defined in Section 4.5.  
+• Mission staff can only view their own mission's tickets — cross -mission visibility is 
+restricted to HQ Super  Admins.  
+• The system will not integrate with external HR or payroll systems in version 1.0.  
+• Internet connectivity at missions is assumed; the system will not support offline -first 
+operation in v1.0.  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 12 of 13  
+8.2 Assumptions  
+• Each mission will have at least one Mission Admin user configured at system launch.  
+• HQ IT team will manage user provisioning and mission setup during onboarding.  
+• An SMTP email service will be available for sending notification emails.  
+• The Ministry will pro vide or procure suitable server/cloud hosting infrastructure.  
+ 
+9. Out of Scope (Version 1.0)  
+• Mobile native applications (iOS / Android) — web responsive interface only in v1.0.  
+• Integration with third -party HR, payroll, or ERP systems.  
+• Offline / low -connectivity mode.  
+• AI-powered ticket categorisation or smart routing.  
+• Customer satisfaction (CSAT) surveys.  
+The above features may be considered for future versions based on user feedback and Ministry 
+priorities.  
+ 
+10. Acceptance Criteria  
+The system will be considered ready for deployment when:  
+• All five ticket statuses (Open, Assigned, In Progress, Resolved, Closed) function 
+correctly end -to-end. 
+• Department -based routing correctly assigns tickets to the appropriate queue for IT, HR, 
+and Facilit ies categories.  
+• Mission isolation is verified — a user from Mission A cannot view tickets from Mission B.  
+• Both email and in -app notifications are sent reliably for all defined trigger events.  
+• HQ dashboard displays accurate aggregated data from all missions . 
+• Reports can be exported as PDF and CSV.  
+• The system passes security testing against the OWASP Top 10 vulnerabilities.  
+• User Acceptance Testing (UAT) is completed with representatives from at least 3 
+missions and HQ.  
+ 
+11. Document Control  
+Version  Date  Autho r Notes  
+Ministry of Foreign and Diaspora Affairs — Kenya HELPDESK TICKET SYSTEM — REQUIREMENTS 
+DOCUMENT  
+Prepared by: Bivon Moriasi  Page 13 of 13 1.0 May 2026  ICT Attaché, MoFA 
+Kenya  Initial draft  
+ 
