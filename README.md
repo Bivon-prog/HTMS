@@ -1,307 +1,343 @@
-# HTMS — Helpdesk Ticket Management System
+# HTMS - Helpdesk Ticket Management System
 
-**Ministry of Foreign and Diaspora Affairs, Kenya**
+A comprehensive helpdesk ticket management system for the Ministry of Foreign and Diaspora Affairs of Kenya, built with Django REST Framework and React.
 
-A comprehensive helpdesk ticket management system designed to support all 70 Kenyan diplomatic missions worldwide, enabling staff to raise, track, and resolve issues across IT, HR, and facilities departments from a centralized platform.
+## 🚀 Features
 
----
+### Core Functionality
+- **User Management**: Role-based access control (Requester, Agent, Mission Admin, HQ Super Admin)
+- **Ticket Management**: Create, assign, track, and resolve tickets
+- **Mission Isolation**: Separate data access per diplomatic mission
+- **Audit Trail**: Complete tracking of all ticket actions
+- **Notifications**: In-app and email notifications
+- **Dashboard**: Comprehensive reporting and analytics
+
+### Advanced Features
+- **SLA Management**: Complex SLA calendars and localized working hours
+- **Asset Management**: Link tickets to assets and inventory
+- **Delegation Workflows**: Out-of-office and delegation support
+- **File Handling**: Secure file uploads with attachment sanitization
+- **Internationalization**: Multi-language support for submission portal
+- **On-Behalf-Of (OBO)**: Staff can submit tickets for others
+
+## 🛠 Technology Stack
+
+### Backend
+- **Framework**: Django 4.2+ with Django REST Framework
+- **Database**: SQLite (default), PostgreSQL, or Appwrite
+- **Authentication**: JWT tokens with refresh mechanism
+- **Background Tasks**: Celery with Redis
+- **Email**: SendGrid integration
+
+### Frontend
+- **Framework**: React 18+
+- **UI Library**: Material-UI (MUI)
+- **State Management**: React Query
+- **Routing**: React Router
+- **Charts**: Recharts
+- **Internationalization**: i18next
+
+## 📋 Prerequisites
+
+- Python 3.8+
+- Node.js 16+
+- Redis (for background tasks)
+- PostgreSQL or SQLite (for database)
 
 ## 🚀 Quick Start
 
-**New to the project? Start here:**
-
+### 1. Clone the Repository
 ```bash
-# 1. Activate virtual environment
-venv\Scripts\activate
-
-# 2. Install dependencies
-pip install -r requirements.txt
-
-# 3. Run complete setup
-python scripts/setup_complete.py
-
-# 4. Start backend
-python manage_supabase.py runserver
-
-# 5. Start frontend (new terminal)
-cd frontend && npm install && npm start
+git clone https://github.com/Bivon-prog/HTMS.git
+cd HTMS
 ```
 
-**📖 Detailed guide:** See [`docs/START_HERE.md`](docs/START_HERE.md)
+### 2. Backend Setup
 
----
+#### Create Virtual Environment
+```bash
+# Windows
+python -m venv venv
+venv\Scripts\activate
 
-## 📁 Project Structure
+# Mac/Linux
+python3 -m venv venv
+source venv/bin/activate
+```
+
+#### Install Dependencies
+```bash
+pip install -r requirements.txt
+```
+
+#### Environment Configuration
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your configuration
+# Set SECRET_KEY, database credentials, email settings, etc.
+```
+
+#### Database Setup
+```bash
+# Run migrations
+python manage.py migrate
+
+# Create superuser
+python manage.py createsuperuser
+
+# Collect static files
+python manage.py collectstatic
+```
+
+#### Start Backend Server
+```bash
+python manage.py runserver
+```
+
+### 3. Frontend Setup
+
+#### Install Dependencies
+```bash
+cd frontend
+npm install
+```
+
+#### Environment Configuration
+```bash
+# Create environment file
+cp .env.example .env.local
+
+# Edit with your API URL
+REACT_APP_API_URL=http://localhost:8000/api
+```
+
+#### Start Frontend Server
+```bash
+npm start
+```
+
+## 🔧 Configuration
+
+### Database Options
+
+#### SQLite (Default)
+```env
+DATABASE_URL=sqlite:///htms.db
+```
+
+#### PostgreSQL
+```env
+DB_NAME=htms
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_HOST=localhost
+DB_PORT=5432
+```
+
+#### Appwrite
+```env
+APPWRITE_ENDPOINT=https://cloud.appwrite.io/v1
+APPWRITE_PROJECT_ID=your_project_id
+APPWRITE_API_KEY=your_api_key
+APPWRITE_DATABASE_ID=your_database_id
+```
+
+### Email Configuration
+```env
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=your_email@gmail.com
+EMAIL_HOST_PASSWORD=your_app_password
+```
+
+## 📊 Access Points
+
+### Development
+- **Backend API**: http://localhost:8000/api/
+- **Django Admin**: http://localhost:8000/admin/
+- **Frontend**: http://localhost:3000
+
+### Default Credentials
+- **Admin Email**: admin@htms.go.ke
+- **Password**: admin123 (change in production)
+
+## 🏗 Project Structure
 
 ```
 HTMS/
-├── docs/                          # 📚 All documentation
-│   ├── START_HERE.md             # ⭐ Begin here
-│   ├── QUICKSTART.md             # Step-by-step setup
-│   ├── SETUP.md                  # Detailed setup guide
-│   ├── FIXES_APPLIED.md          # Changelog
-│   ├── READY_TO_RUN.md           # System overview
-│   ├── SUPABASE_SETUP.md         # Supabase configuration
-│   ├── pdf1_content.txt          # Requirements specification
-│   └── pdf2_content.txt          # Design notes
-│
-├── scripts/                       # 🛠️ Setup & utility scripts
-│   ├── setup_complete.py         # One-command setup
-│   └── setup_supabase.py         # Supabase-specific setup
-│
-├── apps/                          # 🐍 Django applications
-│   ├── authentication/           # User auth & JWT
-│   ├── tickets/                  # Ticket management
-│   ├── missions/                 # 70 missions + categories
-│   ├── assets/                   # Asset tracking
-│   ├── notifications/            # Notification system
-│   ├── dashboard/                # Analytics & reports
-│   └── users/                    # User management
-│
-├── frontend/                      # ⚛️ React frontend
-│   ├── src/
-│   │   ├── pages/               # UI pages
-│   │   ├── components/          # Reusable components
-│   │   └── services/            # API services
-│   └── package.json
-│
-├── htms/                          # ⚙️ Django project settings
-│   ├── settings.py              # Main settings
-│   ├── settings_supabase.py     # Supabase config
-│   └── urls.py                  # URL routing
-│
-├── logs/                          # 📝 Application logs
-├── media/                         # 📎 User uploads
-├── static/                        # 🎨 Static files
-├── venv/                          # 🐍 Python virtual environment
-│
-├── .env                           # 🔐 Local environment variables
-├── .env.supabase                 # 🔐 Supabase credentials
-├── .gitignore                    # Git ignore rules
-├── manage.py                     # Django management (local)
-├── manage_supabase.py            # Django management (Supabase)
-├── requirements.txt              # Python dependencies
-└── README.md                     # This file
+├── apps/
+│   ├── authentication/    # User management & auth
+│   ├── tickets/           # Ticket management
+│   ├── missions/          # Mission management
+│   ├── dashboard/        # Analytics & reporting
+│   ├── notifications/     # Notification system
+│   └── assets/           # Asset management
+├── frontend/             # React frontend
+├── htms/                 # Django project settings
+├── docs/                 # Documentation
+├── requirements.txt      # Python dependencies
+├── manage.py            # Django management script
+└── .env.example         # Environment template
 ```
-
----
-
-## ✨ Features
-
-### Core Functionality
-- ✅ **Ticket Management** — Create, assign, track, and resolve tickets
-- ✅ **Multi-Role Support** — Requester, Agent, Mission Admin, HQ Super Admin
-- ✅ **Mission Isolation** — Each mission sees only their own data
-- ✅ **SLA Management** — Automatic SLA calculations with timezone support
-- ✅ **Audit Trail** — Complete audit logging for all actions
-- ✅ **File Attachments** — Secure file upload with validation
-- ✅ **Notifications** — Email and in-app notifications
-- ✅ **Reporting** — Comprehensive dashboards and reports
-
-### Advanced Features
-- ✅ **Asset Management** — Track government devices and link to tickets
-- ✅ **70 Missions Loaded** — All Kenyan diplomatic missions worldwide
-- ✅ **Complex SLA Calendars** — Mission-specific working hours and holidays
-- ✅ **Escalation Workflows** — Tier 1 (Mission) → Tier 2 (HQ Nairobi)
-- ✅ **Internationalization** — Framework for English, French, Arabic, Mandarin
-- ✅ **Role-Based Access** — Granular permissions per role
-- ✅ **JWT Authentication** — Secure token-based auth with refresh
-
----
-
-## 🌍 Missions Coverage
-
-**70 Kenyan Diplomatic Missions:**
-- 🌍 **Africa:** 29 missions
-- 🌏 **Asia & Oceania:** 11 missions
-- 🌍 **Europe:** 13 missions
-- 🌍 **Middle East:** 10 missions
-- 🌎 **Americas:** 6 missions
-- 🏛️ **Multilateral:** 3 missions (UN, UNESCO)
-
----
-
-## 🔧 Tech Stack
-
-### Backend
-- **Framework:** Django 4.2 with Django REST Framework
-- **Database:** PostgreSQL (Supabase for development)
-- **Authentication:** JWT with SimpleJWT
-- **Task Queue:** Celery with Redis
-- **Email:** SendGrid (console backend for dev)
-
-### Frontend
-- **Framework:** React 18 with Material-UI
-- **State Management:** React Query
-- **Routing:** React Router v6
-- **Charts:** Recharts
-- **Forms:** React Hook Form
-- **Internationalization:** i18next
-
----
-
-## 📚 Documentation
-
-| Document | Description |
-|----------|-------------|
-| **[START_HERE.md](docs/START_HERE.md)** | ⭐ Quick start checklist |
-| **[QUICKSTART.md](docs/QUICKSTART.md)** | Detailed setup guide |
-| **[SETUP.md](docs/SETUP.md)** | Installation instructions |
-| **[FIXES_APPLIED.md](docs/FIXES_APPLIED.md)** | All fixes & improvements |
-| **[READY_TO_RUN.md](docs/READY_TO_RUN.md)** | System overview |
-| **[SUPABASE_SETUP.md](docs/SUPABASE_SETUP.md)** | Supabase configuration |
-| **[pdf1_content.txt](docs/pdf1_content.txt)** | Requirements specification |
-| **[pdf2_content.txt](docs/pdf2_content.txt)** | Design discussion notes |
-
----
-
-## 🎯 User Roles
-
-| Role | Permissions |
-|------|-------------|
-| **Requester** | Submit tickets, view own tickets, add comments |
-| **Agent** | Manage tickets, assign tickets, add internal notes |
-| **Mission Admin** | Manage mission users, view all mission tickets, generate reports |
-| **HQ Super Admin** | Full system access, manage all missions, global dashboards |
-
----
-
-## 🔐 Security Features
-
-- ✅ JWT authentication with token refresh
-- ✅ Role-based access control (RBAC)
-- ✅ Mission data isolation
-- ✅ File upload validation and virus scanning
-- ✅ SQL injection protection
-- ✅ XSS protection
-- ✅ CSRF protection
-- ✅ Secure password hashing
-- ✅ Audit trail for all actions
-
----
-
-## 📊 API Endpoints
-
-### Authentication
-- `POST /api/auth/login/` — User login
-- `POST /api/auth/logout/` — User logout
-- `POST /api/auth/refresh/` — Refresh JWT token
-- `GET /api/auth/verify/` — Verify token
-- `POST /api/auth/password-reset/` — Request password reset
-- `POST /api/auth/password-reset-confirm/` — Confirm password reset
-
-### Tickets
-- `GET /api/tickets/` — List tickets
-- `POST /api/tickets/` — Create ticket
-- `GET /api/tickets/{id}/` — Get ticket details
-- `PATCH /api/tickets/{id}/status/` — Update status
-- `POST /api/tickets/{id}/escalate/` — Escalate to HQ
-- `GET /api/tickets/{id}/comments/` — Get comments
-- `POST /api/tickets/{id}/comments/` — Add comment
-
-### Missions
-- `GET /api/missions/` — List all 70 missions
-- `GET /api/missions/{id}/` — Mission details
-- `GET /api/missions/categories/` — Ticket categories
-
-### Dashboard
-- `GET /api/dashboard/overview/` — Dashboard statistics
-- `GET /api/dashboard/trends/` — Ticket trends
-- `GET /api/dashboard/missions/` — Mission statistics
-
-**Full API documentation:** See [`docs/READY_TO_RUN.md`](docs/READY_TO_RUN.md)
-
----
 
 ## 🧪 Testing
 
-### Run Backend Tests
+### Backend Tests
 ```bash
-python manage_supabase.py test
+# Run all tests
+python manage.py test
+
+# Run specific app tests
+python manage.py test apps.authentication
+
+# Run with coverage
+coverage run --source='.' manage.py test
+coverage report
 ```
 
-### Run Frontend Tests
+### Frontend Tests
 ```bash
 cd frontend
 npm test
 ```
 
----
-
 ## 🚀 Deployment
 
-### Development (Supabase)
+### Production Deployment
+
+#### Backend
+1. Set `DEBUG=False` in production
+2. Configure production database
+3. Set up Redis for Celery
+4. Configure email service
+5. Collect static files
+6. Use Gunicorn as WSGI server
+
+#### Frontend
+1. Build for production
 ```bash
-python scripts/setup_complete.py
-python manage_supabase.py runserver
+npm run build
+```
+2. Deploy to static hosting service
+
+### Docker Deployment
+```bash
+# Build and run with Docker Compose
+docker-compose up -d
 ```
 
-### Production
-See [`docs/READY_TO_RUN.md`](docs/READY_TO_RUN.md) for production deployment checklist.
+## 🔐 Security Considerations
 
----
+- Change default admin credentials in production
+- Use environment variables for sensitive data
+- Enable HTTPS in production
+- Regular security updates
+- Audit logging enabled by default
 
-## 🛠️ Management Commands
+## 📝 API Documentation
 
-```bash
-# Load all 70 missions
-python manage_supabase.py load_missions
+### Authentication
+- `POST /api/auth/login/` - User login
+- `POST /api/auth/logout/` - User logout
+- `POST /api/auth/refresh/` - Refresh token
 
-# Create superuser
-python manage_supabase.py createsuperuser
+### Tickets
+- `GET /api/tickets/` - List tickets
+- `POST /api/tickets/` - Create ticket
+- `GET /api/tickets/{id}/` - Get ticket details
+- `PUT /api/tickets/{id}/` - Update ticket
+- `DELETE /api/tickets/{id}/` - Delete ticket
 
-# Make migrations
-python manage_supabase.py makemigrations
+### Users
+- `GET /api/users/` - List users
+- `GET /api/users/{id}/` - Get user details
+- `PUT /api/users/{id}/` - Update user
 
-# Apply migrations
-python manage_supabase.py migrate
+## 🤝 Contributing
 
-# Django shell
-python manage_supabase.py shell
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Add tests if applicable
+5. Submit a pull request
 
-# Collect static files
-python manage_supabase.py collectstatic
-```
+## 📄 License
 
----
+This project is proprietary to the Ministry of Foreign and Diaspora Affairs of Kenya.
 
-## 📝 License
+## 🆘 Support
 
-This project is proprietary software developed for the Ministry of Foreign and Diaspora Affairs, Kenya.
+For support and questions:
+- Create an issue in the GitHub repository
+- Contact the development team
 
----
+## 🔄 Version History
 
-## 👥 Support
+- **v1.0.0** - Initial release with core functionality
+- **v1.1.0** - Added Appwrite integration
+- **v1.2.0** - Enhanced security features
+- **v1.3.0** - Improved UI/UX and performance
 
-For technical support or questions:
-- **Documentation:** See [`docs/`](docs/) folder
-- **Setup Issues:** See [`docs/QUICKSTART.md`](docs/QUICKSTART.md)
-- **Bug Reports:** Contact system administrator
+## 📊 System Requirements
 
----
+### Minimum Requirements
+- **RAM**: 4GB
+- **Storage**: 10GB
+- **CPU**: 2 cores
+- **Network**: 1Mbps
 
-## 📅 Version History
+### Recommended Requirements
+- **RAM**: 8GB
+- **Storage**: 50GB
+- **CPU**: 4 cores
+- **Network**: 10Mbps
 
-- **v1.0.0** (May 2026) — Initial release
-  - Core ticket management
-  - 70 missions loaded
-  - Asset management
-  - Dashboard & reporting
-  - Multi-role support
+## 🔍 Monitoring and Logging
 
----
+- Application logs stored in `/logs/`
+- Error tracking enabled
+- Performance monitoring available
+- Audit trail for all user actions
 
-## 🙏 Acknowledgments
+## 🌐 Internationalization
 
-**Prepared by:** Bivon Moriasi Onyoni  
-**Position:** ICT Attaché  
-**Organization:** Ministry of Foreign and Diaspora Affairs, Kenya
+Supported languages:
+- English (en)
+- Swahili (sw)
+- French (fr)
+- Arabic (ar)
 
----
+## 📱 Mobile Compatibility
 
-**🎉 Ready to get started? See [`docs/START_HERE.md`](docs/START_HERE.md)**
+The frontend is responsive and works on:
+- Desktop browsers (Chrome, Firefox, Safari, Edge)
+- Tablets (iPad, Android tablets)
+- Mobile phones (iOS, Android)
 
----
+## 🔧 Customization
 
-*Last Updated: May 6, 2026*  
-*HTMS v1.0 — Ministry of Foreign and Diaspora Affairs, Kenya*
+The system is designed to be customizable:
+- Theme colors and branding
+- Custom fields for tickets
+- Workflow automation
+- Integration with external systems
+- Custom reports and analytics
+
+## 📈 Performance
+
+- Optimized database queries
+- Caching implemented
+- Lazy loading for large datasets
+- API rate limiting
+- CDN support for static assets
+
+## 🚨 Error Handling
+
+- Comprehensive error logging
+- User-friendly error messages
+- Graceful degradation
+- Automatic retry mechanisms
+- Health check endpoints
