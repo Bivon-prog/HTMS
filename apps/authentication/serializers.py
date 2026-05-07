@@ -7,6 +7,7 @@ from .models import User
 class UserSerializer(serializers.ModelSerializer):
     mission_name = serializers.CharField(source='mission.name', read_only=True)
     full_name = serializers.ReadOnlyField()
+    timezone = serializers.SerializerMethodField()
 
     class Meta:
         model = User
@@ -16,6 +17,11 @@ class UserSerializer(serializers.ModelSerializer):
             'is_active', 'date_joined', 'last_login', 'created_at', 'updated_at'
         ]
         read_only_fields = ['id', 'username', 'date_joined', 'last_login', 'created_at', 'updated_at']
+
+    def get_timezone(self, obj):
+        if obj.timezone:
+            return str(obj.timezone)
+        return 'UTC'
 
 
 class UserCreateSerializer(serializers.ModelSerializer):
