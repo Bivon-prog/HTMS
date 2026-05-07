@@ -10,7 +10,7 @@ import os
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-htms-development-key')
+SECRET_KEY = config('SECRET_KEY', default='django-insecure-htms-appwrite-key-12345')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = config('DEBUG', default=True, cast=bool)
@@ -76,11 +76,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'htms.wsgi.application'
 
-# Database - SQLite for now (Appwrite integration will be custom)
+# Database - Appwrite Configuration (using SQLite for now)
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'htms.db',
+        'NAME': BASE_DIR / 'htms_appwrite.db',
     }
 }
 
