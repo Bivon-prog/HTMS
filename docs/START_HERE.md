@@ -9,7 +9,12 @@ Follow these steps in order to get your system running.
 ```bash
 # Make sure you're in the HTMS directory
 # Activate virtual environment
+
+# Windows
 venv\Scripts\activate
+
+# Mac/Linux
+source venv/bin/activate
 
 # Install all packages
 pip install -r requirements.txt
@@ -19,40 +24,38 @@ pip install -r requirements.txt
 
 ---
 
-## ✅ Step 2: Verify Supabase Connection
+## ✅ Step 2: Configure Environment
 
-Your `.env.supabase` file should have:
-```
-SUPABASE_DB_HOST=kdcacxkohwhvlzyszlzv.supabase.co
-SUPABASE_DB_NAME=postgres
-SUPABASE_DB_USER=postgres
-SUPABASE_DB_PASSWORD=sb_publishable_Est2B-RMn3oRPBzfGGLZ3w_fsSJuJ5y
+```bash
+# Copy environment template
+cp .env.example .env
+
+# Edit .env with your configuration
+# Set SECRET_KEY, database credentials, email settings, etc.
 ```
 
-**✅ Already configured — no action needed**
+**Database Options:**
+- **SQLite (default):** No additional configuration needed
+- **PostgreSQL:** Set DB_NAME, DB_USER, DB_PASSWORD, DB_HOST, DB_PORT
+- **Appwrite:** Set APPWRITE_ENDPOINT, APPWRITE_PROJECT_ID, APPWRITE_API_KEY, APPWRITE_DATABASE_ID
 
 ---
 
-## ✅ Step 3: Run Complete Setup
+## ✅ Step 3: Run Database Setup
 
 ```bash
-python scripts/setup_complete.py
+# Run migrations
+python manage.py migrate
+
+# Create superuser (you'll be prompted)
+python manage.py createsuperuser
 ```
 
-**This will:**
-1. Test database connection
-2. Create migrations
-3. Apply migrations
-4. Load 70 missions
-5. Load ticket categories
-6. Create admin user (you'll be prompted)
-7. Collect static files
-
-**When prompted, enter:**
-- Admin email: `admin@htms.go.ke` (or your choice)
-- First name: `Admin`
-- Last name: `User`
-- Password: `admin123` (or your choice)
+**When prompted, enter your preferred:**
+- Admin email
+- First name
+- Last name  
+- Password
 
 **⚠️ Remember these credentials!**
 
@@ -61,7 +64,7 @@ python scripts/setup_complete.py
 ## ✅ Step 4: Start Backend Server
 
 ```bash
-python manage_supabase.py runserver
+python manage.py runserver
 ```
 
 **Expected output:**
@@ -107,32 +110,19 @@ You can now view htms-frontend in the browser.
 ## ✅ Step 7: Login & Test
 
 1. **Browser opens to:** http://localhost:3000
-2. **Login with:**
-   - Email: `admin@htms.go.ke` (or what you entered)
-   - Password: `admin123` (or what you entered)
+2. **Login with your superuser credentials** (from Step 3)
 3. **You should see:** Dashboard with statistics
 
 ---
 
 ## ✅ Step 8: Verify Everything Works
 
-### Check Missions Loaded
-1. Click **Missions** in sidebar
-2. You should see **70 missions** listed
-3. Try filtering by region (Africa, Europe, etc.)
-
-### Check Categories Loaded
-1. Click **Tickets** → **Create Ticket**
-2. Category dropdown should show:
-   - IT
-   - HR
-   - Facilities
-   - Finance
-   - Security
-   - Other
+### Check Dashboard
+1. Click **Dashboard** in sidebar
+2. You should see statistics and charts
 
 ### Create a Test Ticket
-1. Click **Create Ticket**
+1. Click **Tickets** → **Create Ticket**
 2. Fill in:
    - Title: "Test ticket"
    - Description: "Testing the system"
@@ -142,12 +132,9 @@ You can now view htms-frontend in the browser.
 4. You should see success message
 5. Go to **Tickets** → You should see your ticket
 
-### Check Dashboard
-1. Click **Dashboard**
-2. You should see:
-   - Total tickets: 1
-   - Charts with data
-   - Statistics
+### Check User Management
+1. Click **Users** in sidebar
+2. You should see the user management interface
 
 ---
 
@@ -168,7 +155,6 @@ Go to **Users** → **Add User** and create:
 - First Name: Test
 - Last Name: Requester
 - Role: Requester
-- Mission: Kenya Permanent Mission to UN Nairobi
 
 **Test Agent:**
 - Email: `agent@test.ke`
@@ -176,7 +162,6 @@ Go to **Users** → **Add User** and create:
 - Last Name: Agent
 - Role: Agent
 - Department: IT
-- Mission: Kenya Permanent Mission to UN Nairobi
 
 ### 2. Test Workflows
 
@@ -185,18 +170,7 @@ Go to **Users** → **Add User** and create:
 3. **Logout**
 4. **Login as Agent** → View ticket, assign to yourself, add comment
 5. **Logout**
-6. **Login as Requester** → View comment, reply
-7. **Logout**
-8. **Login as Agent** → Mark ticket as resolved
-9. **Logout**
-10. **Login as Admin** → View dashboard stats
-
-### 3. Explore Features
-
-- **Assets:** Add government devices
-- **Missions:** Browse all 70 missions
-- **Profile:** Update your profile, change password
-- **Tickets:** Test escalation, attachments, internal notes
+6. **Login as Admin** → View dashboard stats
 
 ---
 
@@ -207,7 +181,12 @@ Go to **Users** → **Add User** and create:
 
 **Fix:**
 ```bash
+# Windows
 venv\Scripts\activate
+pip install -r requirements.txt
+
+# Mac/Linux
+source venv/bin/activate
 pip install -r requirements.txt
 ```
 
@@ -225,22 +204,16 @@ npm install
 **Error:** `OperationalError: could not connect to server`
 
 **Fix:**
-1. Check `.env.supabase` file
-2. Verify Supabase project is active
-3. Check Supabase dashboard → Settings → Database
+1. Check `.env` file configuration
+2. Verify database server is running
+3. Check connection credentials
 
 ### Login fails
 **Error:** `Invalid credentials`
 
 **Fix:**
-1. Make sure you're using the credentials you entered during setup
-2. Try resetting: `python manage_supabase.py createsuperuser`
-
-### Missions not showing
-**Fix:**
-```bash
-python manage_supabase.py load_missions
-```
+1. Make sure you're using the credentials you created during setup
+2. Try resetting: `python manage.py createsuperuser`
 
 ---
 
@@ -249,22 +222,19 @@ python manage_supabase.py load_missions
 ### Backend Commands
 ```bash
 # Start server
-python manage_supabase.py runserver
+python manage.py runserver
 
 # Create migrations
-python manage_supabase.py makemigrations
+python manage.py makemigrations
 
 # Apply migrations
-python manage_supabase.py migrate
-
-# Load missions
-python manage_supabase.py load_missions
+python manage.py migrate
 
 # Create superuser
-python manage_supabase.py createsuperuser
+python manage.py createsuperuser
 
 # Django shell
-python manage_supabase.py shell
+python manage.py shell
 ```
 
 ### Frontend Commands
@@ -284,12 +254,8 @@ npm run build
 ## Documentation
 
 - **This file:** Quick start checklist
-- **QUICKSTART.md:** Detailed setup guide
-- **FIXES_APPLIED.md:** All fixes made
-- **READY_TO_RUN.md:** System overview
 - **README.md:** Full documentation
-- **pdf1_content.txt:** Requirements specification
-- **pdf2_content.txt:** Design notes
+- **.env.example:** Environment configuration template
 
 ---
 
@@ -298,15 +264,12 @@ npm run build
 If you encounter issues:
 
 1. Check the troubleshooting section above
-2. Review `QUICKSTART.md` for detailed instructions
-3. Check `FIXES_APPLIED.md` for known issues
-4. Review Django/React error messages carefully
+2. Review README.md for detailed instructions
+3. Review Django/React error messages carefully
 
 ---
 
-**🎯 Your Goal:** Get to the dashboard with 70 missions loaded
-
-**📧 Admin Login:** `admin@htms.go.ke` / `admin123` (or your custom credentials)
+**🎯 Your Goal:** Get to the dashboard and create your first ticket
 
 **🌐 Frontend:** http://localhost:3000  
 **🔧 Backend:** http://localhost:8000  
