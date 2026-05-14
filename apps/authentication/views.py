@@ -9,12 +9,17 @@ from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils import timezone
-from .models import User
+from .models import OnBehalfOfGrant, User
 from .serializers import (
-    UserSerializer, UserCreateSerializer, UserUpdateSerializer,
-    LoginSerializer, PasswordResetRequestSerializer, PasswordResetConfirmSerializer,
+    LoginSerializer,
+    OnBehalfOfGrantSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    UserCreateSerializer,
+    UserSerializer,
+    UserUpdateSerializer,
 )
-from apps.permissions import IsAdminUser, IsOwnerOrAdmin
+from apps.permissions import IsAdminUser, IsOwnerOrAdmin, IsHQSuperAdmin
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +40,11 @@ class UserListView(generics.ListCreateAPIView):
     search_fields = ['first_name', 'last_name', 'email']
     ordering_fields = ['first_name', 'last_name', 'date_joined']
     ordering = ['first_name', 'last_name']
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [permissions.IsAuthenticated(), IsHQSuperAdmin()]
+        return [permissions.IsAuthenticated(), IsAdminUser()]
 
     def get_serializer_class(self):
         return UserCreateSerializer if self.request.method == 'POST' else UserSerializer
@@ -173,3 +183,14 @@ def verify_token(request):
         'valid': True,
         'user': UserSerializer(request.user).data,
     })
+
+
+class OnBehalfOfGrantListCreateView(generics.ListCreateAPIView):
+    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
+    serializer_class = OnBehalfOfGrantSerializer
+
+    def get_queryset(self):
+        qs = OnBehalfOfGrant.objects.select_related('mission', 'assistant', 'official').order_by('-created_at')
+        if self.request.user.role == 'Mission_Admin':
+            return qs.filter(mission=self.request.user.mission)
+        return qs

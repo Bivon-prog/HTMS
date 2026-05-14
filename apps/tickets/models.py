@@ -1,4 +1,3 @@
-import uuid
 from django.db import models
 from django.utils import timezone
 from django.conf import settings
@@ -51,9 +50,18 @@ class Ticket(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Open')
     
     requester = models.ForeignKey(
-        settings.AUTH_USER_MODEL, 
-        on_delete=models.PROTECT, 
-        related_name='requested_tickets'
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        related_name='requested_tickets',
+        help_text='Staff member who submitted the ticket (assistant when using OBO)',
+    )
+    beneficiary = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name='beneficiary_tickets',
+        help_text='Senior official on whose behalf the ticket was raised (SRS 4.6 OBO)',
     )
     assigned_agent = models.ForeignKey(
         settings.AUTH_USER_MODEL, 

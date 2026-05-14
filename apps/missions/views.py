@@ -1,100 +1,47 @@
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
-from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework.filters import SearchFilter, OrderingFilter
-from .models import Mission, HolidayCalendar, TicketCategory
-from .serializers import MissionSerializer, HolidayCalendarSerializer, TicketCategorySerializer
-from apps.permissions import IsAdminUser
+
+from apps.permissions import IsHQSuperAdmin
+
+from .models import Mission, TicketCategory
+from .serializers import MissionSerializer, TicketCategorySerializer
 
 
-class MissionListView(generics.ListCreateAPIView):
+class MissionListView(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = Mission.objects.all().order_by('name')
+    serializer_class = MissionSerializer
+
+
+class MissionDetailView(generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAuthenticated]
     queryset = Mission.objects.all()
     serializer_class = MissionSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['region', 'status', 'country']
-    search_fields = ['name', 'city', 'country']
-    ordering_fields = ['name', 'created_at']
-    ordering = ['name']
-
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [permissions.IsAuthenticated(), IsAdminUser()]
-        return [permissions.IsAuthenticated()]
-
-
-class MissionDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Mission.objects.all()
-    serializer_class = MissionSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
-
-
-class HolidayCalendarListView(generics.ListCreateAPIView):
-    serializer_class = HolidayCalendarSerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [DjangoFilterBackend, OrderingFilter]
-    filterset_fields = ['mission', 'is_recurring']
-    ordering = ['holiday_date']
-
-    def get_queryset(self):
-        queryset = HolidayCalendar.objects.all()
-        mission_id = self.request.query_params.get('mission')
-        if mission_id:
-            queryset = queryset.filter(mission_id=mission_id)
-        return queryset
-
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [permissions.IsAuthenticated(), IsAdminUser()]
-        return [permissions.IsAuthenticated()]
-
-
-class HolidayCalendarDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = HolidayCalendar.objects.all()
-    serializer_class = HolidayCalendarSerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
-
-
-class TicketCategoryListView(generics.ListCreateAPIView):
-    queryset = TicketCategory.objects.all()
-    serializer_class = TicketCategorySerializer
-    permission_classes = [permissions.IsAuthenticated]
-    filter_backends = [SearchFilter, OrderingFilter]
-    search_fields = ['name', 'description']
-    ordering = ['name']
-
-    def get_permissions(self):
-        if self.request.method == 'POST':
-            return [permissions.IsAuthenticated(), IsAdminUser()]
-        return [permissions.IsAuthenticated()]
-
-
-class TicketCategoryDetailView(generics.RetrieveUpdateDestroyAPIView):
-    queryset = TicketCategory.objects.all()
-    serializer_class = TicketCategorySerializer
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
 
 
 @api_view(['GET'])
 @permission_classes([permissions.IsAuthenticated])
-def mission_working_hours(request, mission_id):
-    """Check if it's currently working hours for a mission"""
-    try:
-        mission = Mission.objects.get(id=mission_id)
-        is_working = mission.is_working_hours()
-        
-        return Response({
-            'mission_id': mission_id,
-            'mission_name': mission.name,
-            'timezone': str(mission.timezone),
-            'is_working_hours': is_working,
-            'working_hours': {
-                'start': mission.work_start_time,
-                'end': mission.work_end_time,
-                'week_start': mission.working_week_start,
-                'week_end': mission.working_week_end,
-            }
-        })
-    except Mission.DoesNotExist:
-        return Response({'error': 'Mission not found'}, status=status.HTTP_404_NOT_FOUND)
+def ticket_categories(request):
+    qs = TicketCategory.objects.all().order_by('name')
+    return Response(TicketCategorySerializer(qs, many=True).data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated, IsHQSuperAdmin])
+def mission_holidays(request):
+    """Placeholder list; extend with CRUD as needed (SRS 4.1)."""
+    from .models import HolidayCalendar
+
+    qs = HolidayCalendar.objects.select_related('mission').all().order_by('holiday_date')[:500]
+    data = [
+        {
+            'id': h.id,
+            'mission_id': h.mission_id,
+            'mission_name': h.mission.name,
+            'holiday_date': h.holiday_date,
+            'holiday_name': h.holiday_name,
+        }
+        for h in qs
+    ]
+    return Response(data)

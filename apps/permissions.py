@@ -50,18 +50,20 @@ class IsMissionUserOrAdmin(permissions.BasePermission):
     Allows access only to users from the same mission or admin users.
     """
     def has_object_permission(self, request, view, obj):
-        # HQ Super Admin can access any mission
         if request.user.role == 'HQ_Super_Admin':
             return True
-        
-        # Check if the object has a mission field
+
+        from apps.tickets.models import Ticket
+        if isinstance(obj, Ticket):
+            from apps.tickets.access import user_can_access_ticket
+            return user_can_access_ticket(request.user, obj)
+
         if hasattr(obj, 'mission'):
             return obj.mission == request.user.mission
-        
-        # Check if the object has a requester with a mission
+
         if hasattr(obj, 'requester') and hasattr(obj.requester, 'mission'):
             return obj.requester.mission == request.user.mission
-        
+
         return False
 
 

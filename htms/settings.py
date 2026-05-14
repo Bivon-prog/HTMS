@@ -28,6 +28,7 @@ DJANGO_APPS = [
 ]
 
 THIRD_PARTY_APPS = [
+    'django_filters',
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
@@ -76,11 +77,12 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'htms.wsgi.application'
 
-# Database - SQLite for now (Appwrite integration will be custom)
+# Database — local MongoDB (official django-mongodb-backend; SRS / architecture)
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'htms.db',
+        'ENGINE': 'django_mongodb_backend',
+        'HOST': config('MONGODB_HOST', default='mongodb://127.0.0.1:27017'),
+        'NAME': config('MONGODB_NAME', default='htms'),
     }
 }
 
@@ -124,7 +126,7 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 # Default primary key field type
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = 'django_mongodb_backend.fields.ObjectIdAutoField'
 
 # REST Framework Configuration
 REST_FRAMEWORK = {
@@ -147,10 +149,10 @@ REST_FRAMEWORK = {
 from datetime import timedelta
 
 SIMPLE_JWT = {
-    'ACCESS_TOKEN_LIFETIME': timedelta(hours=24),
-    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=config('JWT_ACCESS_MINUTES', default=30, cast=int)),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=config('JWT_REFRESH_TOKEN_DAYS', default=7, cast=int)),
     'ROTATE_REFRESH_TOKENS': True,
-    'BLACKLIST_AFTER_ROTATION': True,
+    'BLACKLIST_AFTER_ROTATION': False,
     'UPDATE_LAST_LOGIN': True,
     'ALGORITHM': 'HS256',
     'SIGNING_KEY': SECRET_KEY,
@@ -169,6 +171,11 @@ CORS_ALLOWED_ORIGINS = config(
 )
 
 CORS_ALLOW_CREDENTIALS = True
+
+SESSION_COOKIE_AGE = config('SESSION_COOKIE_AGE', default=1800, cast=int)
+SESSION_SAVE_EVERY_REQUEST = True
+
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default='noreply@htms.local')
 
 # Email Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
@@ -211,3 +218,28 @@ LOGGING = {
         },
     },
 }
+
+# Fix DRF mapping for MongoDB ObjectIds
+try:
+    from rest_framework.serializers import ModelSerializer
+    from django_mongodb_backend.fields import ObjectIdAutoField
+    from rest_framework import fields
+    ModelSerializer.serializer_field_mapping[ObjectIdAutoField] = fields.CharField
+
+    # Fix JSON serialization of ObjectIds and ZoneInfo in DRF Responses
+    from bson import ObjectId
+    from zoneinfo import ZoneInfo
+    from rest_framework.utils.encoders import JSONEncoder
+    _original_default = JSONEncoder.default
+    def _custom_default(self, obj):
+        if isinstance(obj, ObjectId) or isinstance(obj, ZoneInfo):
+            return str(obj)
+        return _original_default(self, obj)
+    JSONEncoder.default = _custom_default
+except Exception:
+    pass
+
+from django.db.models import AutoField, BigAutoField, SmallAutoField
+AutoField.get_internal_type = lambda self: 'ObjectIdAutoField'
+BigAutoField.get_internal_type = lambda self: 'ObjectIdAutoField'
+SmallAutoField.get_internal_type = lambda self: 'ObjectIdAutoField'

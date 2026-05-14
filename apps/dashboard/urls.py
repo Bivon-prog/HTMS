@@ -6,4 +6,5 @@ urlpatterns = [
     path('missions/', views.mission_statistics, name='mission_statistics'),
     path('trends/', views.ticket_trends, name='ticket_trends'),
     path('agents/', views.agent_performance, name='agent_performance'),
+    path('export/csv/', views.export_dashboard_tickets_csv, name='dashboard_export_csv'),
 ]

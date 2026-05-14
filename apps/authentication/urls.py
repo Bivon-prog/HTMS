@@ -3,6 +3,7 @@ from rest_framework_simplejwt.views import TokenRefreshView
 from . import views
 
 urlpatterns = [
+    path('on-behalf-grants/', views.OnBehalfOfGrantListCreateView.as_view(), name='on_behalf_grants'),
     path('login/', views.login_view, name='login'),
     path('logout/', views.logout_view, name='logout'),
     path('refresh/', TokenRefreshView.as_view(), name='token_refresh'),

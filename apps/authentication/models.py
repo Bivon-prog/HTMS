@@ -9,6 +9,7 @@ class UserManager(BaseUserManager):
         if not email:
             raise ValueError('The Email must be set')
         email = self.normalize_email(email)
+        extra_fields.setdefault('username', email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
@@ -85,3 +86,56 @@ class User(AbstractUser):
     def can_assign_tickets(self):
         """Check if user can assign tickets"""
         return self.role in ['Agent', 'Mission_Admin', 'HQ_Super_Admin']
+
+
+class OnBehalfOfGrant(models.Model):
+    """Authorises an assistant to file tickets for a senior official (SRS 4.6)."""
+    mission = models.ForeignKey('missions.Mission', on_delete=models.CASCADE, related_name='obo_grants')
+    assistant = models.ForeignKey(
+        'authentication.User',
+        on_delete=models.CASCADE,
+        related_name='obo_grants_as_assistant',
+    )
+    official = models.ForeignKey(
+        'authentication.User',
+        on_delete=models.CASCADE,
+        related_name='obo_grants_as_official',
+    )
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        db_table = 'on_behalf_of_grants'
+        verbose_name = 'On-Behalf-Of grant'
+        unique_together = [['mission', 'assistant', 'official']]
+
+    def __str__(self):
+        return f"{self.assistant} → {self.official} ({self.mission})"
+
+
+class Delegation(models.Model):
+    """Temporary transfer of approval authority (SRS 4.3 — data model; routing hooks can extend later)."""
+    delegator = models.ForeignKey(
+        'authentication.User',
+        on_delete=models.CASCADE,
+        related_name='delegations_as_delegator',
+    )
+    deputy = models.ForeignKey(
+        'authentication.User',
+        on_delete=models.CASCADE,
+        related_name='delegations_as_deputy',
+    )
+    starts_at = models.DateTimeField()
+    ends_at = models.DateTimeField()
+    scope_all = models.BooleanField(default=True)
+    scope_categories = models.JSONField(default=list, blank=True)
+    cancelled_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = 'delegations'
+        ordering = ['-starts_at']
+
+    def __str__(self):
+        return f"{self.delegator} → {self.deputy}"

@@ -17,18 +17,17 @@ class Mission(models.Model):
     city = models.CharField(max_length=100)
     region = models.CharField(max_length=20, choices=REGION_CHOICES)
     timezone = TimeZoneField()
-    
-    # Working hours configuration
-    working_week_start = models.IntegerField(default=1)  # 1=Monday, 7=Sunday
-    working_week_end = models.IntegerField(default=5)    # 5=Friday
+
+    working_week_start = models.IntegerField(default=1)
+    working_week_end = models.IntegerField(default=5)
     work_start_time = models.TimeField(default='09:00')
     work_end_time = models.TimeField(default='17:00')
-    
+
     status = models.CharField(max_length=20, default='Active', choices=[
         ('Active', 'Active'),
         ('Inactive', 'Inactive'),
     ])
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -39,24 +38,28 @@ class Mission(models.Model):
         ordering = ['name']
 
     def __str__(self):
-        return f"{self.name} - {self.city}, {self.country}"
+        return f'{self.name} - {self.city}, {self.country}'
 
     def is_working_hours(self, datetime_obj=None):
-        """Check if given datetime is within working hours for this mission"""
         from django.utils import timezone
         import pytz
-        
+
         if datetime_obj is None:
             datetime_obj = timezone.now()
-        
-        # Convert to mission timezone
+
         local_time = datetime_obj.astimezone(pytz.timezone(str(self.timezone)))
-        
-        # Check day of week
-        if not (self.working_week_start <= local_time.isoweekday() <= self.working_week_end):
+        iso = local_time.isoweekday()
+        ws, we = self.working_week_start, self.working_week_end
+        if ws <= we:
+            if not (ws <= iso <= we):
+                return False
+        else:
+            if not (iso >= ws or iso <= we):
+                return False
+
+        if HolidayCalendar.objects.filter(mission=self, holiday_date=local_time.date()).exists():
             return False
-        
-        # Check time of day
+
         current_time = local_time.time()
         return self.work_start_time <= current_time <= self.work_end_time
 
@@ -65,7 +68,7 @@ class HolidayCalendar(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.CASCADE, related_name='holidays')
     holiday_date = models.DateField()
     holiday_name = models.CharField(max_length=100)
-    is_recurring = models.BooleanField(default=False)  # For annual holidays
+    is_recurring = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -73,16 +76,30 @@ class HolidayCalendar(models.Model):
         verbose_name = 'Holiday'
         verbose_name_plural = 'Holidays'
         ordering = ['holiday_date']
-        unique_together = ['mission', 'holiday_date']
+        unique_together = [['mission', 'holiday_date']]
 
     def __str__(self):
-        return f"{self.holiday_name} - {self.mission.name} ({self.holiday_date})"
+        return f'{self.holiday_name} - {self.mission.name} ({self.holiday_date})'
 
 
 class TicketCategory(models.Model):
+    ROUTING_DEPARTMENT_CHOICES = [
+        ('IT', 'IT'),
+        ('HR', 'HR'),
+        ('Facilities', 'Facilities'),
+        ('Finance', 'Finance'),
+        ('Admin', 'Admin'),
+    ]
+
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
-    auto_escalation_hours = models.IntegerField(null=True, blank=True, help_text="Hours before auto-escalation to HQ")
+    routing_department = models.CharField(
+        max_length=20,
+        choices=ROUTING_DEPARTMENT_CHOICES,
+        default='IT',
+        help_text='Department queue this category routes to (SRS 3.4 / pdf2)',
+    )
+    auto_escalation_hours = models.IntegerField(null=True, blank=True, help_text='Hours before auto-escalation to HQ')
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

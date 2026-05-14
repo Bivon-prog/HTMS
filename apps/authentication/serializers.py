@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from .models import User
+from .models import OnBehalfOfGrant, User
 
 
 class UserSerializer(serializers.ModelSerializer):
@@ -128,3 +128,32 @@ class PasswordResetConfirmSerializer(serializers.Serializer):
         if attrs['password'] != attrs['password_confirm']:
             raise serializers.ValidationError("Passwords don't match")
         return attrs
+
+
+class OnBehalfOfGrantSerializer(serializers.ModelSerializer):
+    assistant_name = serializers.CharField(source='assistant.get_full_name', read_only=True)
+    official_name = serializers.CharField(source='official.get_full_name', read_only=True)
+
+    class Meta:
+        model = OnBehalfOfGrant
+        fields = [
+            'id', 'mission', 'assistant', 'assistant_name', 'official', 'official_name',
+            'is_active', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+    def validate(self, attrs):
+        assistant = attrs.get('assistant')
+        official = attrs.get('official')
+        if assistant and official and assistant.pk == official.pk:
+            raise serializers.ValidationError('Assistant and official must be different users.')
+        mission = attrs.get('mission') or self.context['request'].user.mission
+        if mission and assistant and getattr(assistant, 'mission_id', None) and assistant.mission_id != mission.id:
+            raise serializers.ValidationError('Assistant must belong to the mission.')
+        return attrs
+
+    def create(self, validated_data):
+        request = self.context['request']
+        if request.user.role == 'Mission_Admin':
+            validated_data['mission'] = request.user.mission
+        return super().create(validated_data)
