@@ -8,10 +8,24 @@ from .models import Mission, TicketCategory
 from .serializers import MissionSerializer, TicketCategorySerializer
 
 
+from django.db.models import Case, When, Value, IntegerField
+
 class MissionListView(generics.ListAPIView):
     permission_classes = [permissions.IsAuthenticated]
-    queryset = Mission.objects.all().order_by('name')
     serializer_class = MissionSerializer
+    pagination_class = None
+    filterset_fields = ['region', 'status']
+    search_fields = ['name', 'city', 'country']
+
+    def get_queryset(self):
+        return Mission.objects.annotate(
+            hq_order=Case(
+                When(name='Ministry Headquarters', then=Value(1)),
+                When(name='316 UPPERHILL', then=Value(2)),
+                default=Value(3),
+                output_field=IntegerField(),
+            )
+        ).order_by('hq_order', 'name')
 
 
 class MissionDetailView(generics.RetrieveAPIView):

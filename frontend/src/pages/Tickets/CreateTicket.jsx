@@ -42,10 +42,23 @@ const CreateTicket = () => {
     defaultValues: { priority: 'Medium' },
   });
 
+  const { data: oboGrants = [] } = useQuery('obo-grants', async () => {
+    const res = await api.get('/auth/on-behalf-grants/');
+    return res.data.results || res.data;
+  });
+
   const createMutation = useMutation(
     (data) => ticketService.createTicket(data),
     {
-      onSuccess: (data) => {
+      onSuccess: async (data) => {
+        // Upload attachments sequentially if there are any
+        for (const file of attachments) {
+          try {
+            await ticketService.uploadAttachment(data.id, file);
+          } catch (err) {
+            toast.error(`Failed to upload ${file.name}`);
+          }
+        }
         toast.success(`Ticket ${data.ticket_number} created successfully`);
         navigate('/tickets');
       },
@@ -64,6 +77,7 @@ const CreateTicket = () => {
       priority: data.priority,
     };
     if (data.linked_asset) payload.linked_asset = data.linked_asset;
+    if (data.beneficiary) payload.beneficiary = data.beneficiary;
     createMutation.mutate(payload);
   };
 
@@ -170,6 +184,28 @@ const CreateTicket = () => {
                   />
                 </FormControl>
               </Grid>
+
+              {oboGrants.length > 0 && (
+                <Grid item xs={12}>
+                  <FormControl fullWidth>
+                    <InputLabel>Submit On Behalf Of (optional)</InputLabel>
+                    <Controller
+                      name="beneficiary"
+                      control={control}
+                      render={({ field }) => (
+                        <Select {...field} label="Submit On Behalf Of (optional)">
+                          <MenuItem value="">Myself</MenuItem>
+                          {oboGrants.map((grant) => (
+                            <MenuItem key={grant.id} value={grant.official}>
+                              {grant.official_name}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      )}
+                    />
+                  </FormControl>
+                </Grid>
+              )}
 
               <Grid item xs={12}>
                 <Button variant="outlined" component="label" startIcon={<Send />}>

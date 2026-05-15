@@ -265,7 +265,7 @@ const TicketList = () => {
             </Box>
           ) : (
             <DataGrid
-              rows={ticketsData?.tickets || []}
+              rows={ticketsData?.results || []}
               columns={columns}
               pageSize={20}
               rowsPerPageOptions={[20]}
@@ -279,11 +279,11 @@ const TicketList = () => {
       </Card>
 
       {/* Pagination */}
-      {ticketsData?.pagination && (
+      {ticketsData?.count > 0 && (
         <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
           <Pagination
-            count={ticketsData.pagination.pages}
-            page={ticketsData.pagination.page}
+            count={Math.ceil(ticketsData.count / 20)}
+            page={filters.page}
             onChange={(e, page) => handlePageChange(page)}
             color="primary"
           />

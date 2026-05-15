@@ -186,11 +186,18 @@ def verify_token(request):
 
 
 class OnBehalfOfGrantListCreateView(generics.ListCreateAPIView):
-    permission_classes = [permissions.IsAuthenticated, IsAdminUser]
     serializer_class = OnBehalfOfGrantSerializer
+
+    def get_permissions(self):
+        if self.request.method == 'POST':
+            return [permissions.IsAuthenticated(), IsAdminUser()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         qs = OnBehalfOfGrant.objects.select_related('mission', 'assistant', 'official').order_by('-created_at')
-        if self.request.user.role == 'Mission_Admin':
-            return qs.filter(mission=self.request.user.mission)
-        return qs
+        user = self.request.user
+        if user.role == 'HQ_Super_Admin':
+            return qs
+        if user.role == 'Mission_Admin':
+            return qs.filter(mission=user.mission)
+        return qs.filter(assistant=user, is_active=True)

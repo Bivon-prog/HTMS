@@ -37,7 +37,7 @@ const Missions = () => {
       field: 'working_hours', headerName: 'Working Hours', width: 160,
       valueGetter: (p) => `${p.row.work_start_time || ''} – ${p.row.work_end_time || ''}`,
     },
-    { field: 'user_count', headerName: 'Users', width: 80, type: 'number' },
+    { field: 'mission_admin_id', headerName: 'Mission Admin ID', width: 150 },
     {
       field: 'status', headerName: 'Status', width: 100,
       renderCell: (p) => <Chip label={p.value} color={p.value === 'Active' ? 'success' : 'default'} size="small" />,
