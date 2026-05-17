@@ -46,6 +46,7 @@ missions_data = {
         ('Indonesia', 'Jakarta'),
         ('Japan', 'Tokyo'),
         ('Malaysia', 'Kuala Lumpur'),
+        ('New Zealand', 'Wellington'),
         ('Pakistan', 'Islamabad'),
         ('South Korea', 'Seoul'),
         ('Thailand', 'Bangkok'),
@@ -110,7 +111,8 @@ def get_timezone(city, country, region):
         'Muscat': 'Asia/Muscat', 'Doha': 'Asia/Qatar', 'Riyadh': 'Asia/Riyadh',
         'Abu Dhabi': 'Asia/Dubai', 'Brasília': 'America/Sao_Paulo', 'Ottawa': 'America/Toronto',
         'Havana': 'America/Havana', 'Washington': 'America/New_York', 'New York': 'America/New_York',
-        'Los Angeles': 'America/Los_Angeles', 'Nairobi': 'Africa/Nairobi'
+        'Los Angeles': 'America/Los_Angeles', 'Nairobi': 'Africa/Nairobi',
+        'Wellington': 'Pacific/Auckland',
     }
     for key, tz in mapping.items():
         if key in city or key in country:
@@ -158,4 +160,9 @@ for region, locations in missions_data.items():
             mission.region = region
             mission.save()
 
-print(f"\\nSuccessfully inserted {count} new missions. Total missions in DB: {Mission.objects.count()}")
+total = Mission.objects.count()
+print(f"\nSuccessfully inserted {count} new missions. Total missions in DB: {total}")
+if total < 70:
+    print(f"WARNING: Only {total} missions in DB - expected 70.")
+else:
+    print(f"[OK] Mission count requirement satisfied ({total} >= 70).")

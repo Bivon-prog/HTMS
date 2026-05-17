@@ -31,7 +31,7 @@ class UserCreateSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = [
-            'username', 'email', 'first_name', 'last_name', 'password',
+            'email', 'first_name', 'last_name', 'password',
             'password_confirm', 'role', 'department', 'mission', 'timezone'
         ]
 
@@ -43,7 +43,9 @@ class UserCreateSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data.pop('password_confirm')
         password = validated_data.pop('password')
-        user = User.objects.create_user(**validated_data)
+        # Auto-derive username from email
+        validated_data.setdefault('username', validated_data['email'])
+        user = User(**validated_data)
         user.set_password(password)
         user.save()
         return user

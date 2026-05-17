@@ -134,6 +134,7 @@ const CreateTicket = () => {
                   <Controller
                     name="category"
                     control={control}
+                    defaultValue=""
                     rules={{ required: 'Category is required' }}
                     render={({ field }) => (
                       <Select {...field} label="Category *">
@@ -192,6 +193,7 @@ const CreateTicket = () => {
                     <Controller
                       name="beneficiary"
                       control={control}
+                      defaultValue=""
                       render={({ field }) => (
                         <Select {...field} label="Submit On Behalf Of (optional)">
                           <MenuItem value="">Myself</MenuItem>

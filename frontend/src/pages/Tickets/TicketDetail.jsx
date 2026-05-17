@@ -7,12 +7,21 @@ import {
   DialogActions, MenuItem, Select, FormControl, InputLabel,
 } from '@mui/material';
 import {
-  ArrowBack, Send, AttachFile, Escalator, AssignmentInd,
+  ArrowBack, Send, AttachFile, Escalator, AssignmentInd, PersonAdd,
 } from '@mui/icons-material';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import toast from 'react-hot-toast';
 import ticketService from '../../services/ticketService';
 import authService from '../../services/authService';
+import axios from 'axios';
+
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const api = axios.create({ baseURL: API_BASE_URL });
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('access_token');
+  if (token) config.headers.Authorization = `Bearer ${token}`;
+  return config;
+});
 
 const STATUS_COLORS = {
   Open: 'default', Assigned: 'info', In_Progress: 'warning',
@@ -32,12 +41,30 @@ const TicketDetail = () => {
   const [isInternal, setIsInternal] = useState(false);
   const [statusDialog, setStatusDialog] = useState(false);
   const [newStatus, setNewStatus] = useState('');
+  const [newStatusComment, setNewStatusComment] = useState('');
   const [escalateDialog, setEscalateDialog] = useState(false);
   const [escalateReason, setEscalateReason] = useState('');
+  const [assignDialog, setAssignDialog] = useState(false);
+  const [selectedAgent, setSelectedAgent] = useState('');
 
   const { data: ticket, isLoading, error } = useQuery(
     ['ticket', id],
     () => ticketService.getTicket(id)
+  );
+
+  // Load agents for the assignment picker (Mission Admin + HQ)
+  const isAdmin = ['Mission_Admin', 'HQ_Super_Admin'].includes(user?.role);
+  const { data: agentsList = [] } = useQuery(
+    ['agents', ticket?.mission],
+    async () => {
+      const res = await api.get('/auth/', { params: { role: 'Agent' } });
+      const all = res.data.results || res.data;
+      // Also include Mission_Admin & HQ_Super_Admin who can resolve tickets
+      const res2 = await api.get('/auth/', { params: { role: 'Mission_Admin' } });
+      const admins = res2.data.results || res2.data;
+      return [...all, ...admins];
+    },
+    { enabled: isAdmin && !!ticket }
   );
 
   const addCommentMutation = useMutation(
@@ -77,9 +104,56 @@ const TicketDetail = () => {
     }
   );
 
+  const assignToMeMutation = useMutation(
+    () => ticketService.assignTicket(id, user?.id),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['ticket', id]);
+        toast.success('Ticket assigned to you');
+      },
+      onError: () => toast.error('Failed to assign ticket'),
+    }
+  );
+
+  const assignAgentMutation = useMutation(
+    (agentId) => ticketService.assignTicket(id, agentId),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(['ticket', id]);
+        setAssignDialog(false);
+        setSelectedAgent('');
+        toast.success('Ticket assigned successfully');
+      },
+      onError: () => toast.error('Failed to assign ticket'),
+    }
+  );
+
+  // Determine what statuses this user can transition to from current
+  const getValidNextStatuses = (current) => {
+    const isAdmin = ['Mission_Admin', 'HQ_Super_Admin'].includes(user?.role);
+    if (isAdmin) return ['Open', 'Assigned', 'In_Progress', 'Resolved', 'Closed'];
+    // Agents can move forward only
+    const forward = {
+      Open: ['Assigned', 'In_Progress'],
+      Assigned: ['In_Progress', 'Resolved'],
+      In_Progress: ['Resolved'],
+      Resolved: ['Closed'],
+      Closed: [],
+    };
+    return forward[current] || [];
+  };
+
   const canChangeStatus = user?.role !== 'Requester';
   const canEscalate = ['Agent', 'Mission_Admin', 'HQ_Super_Admin'].includes(user?.role);
   const canAddInternal = user?.role !== 'Requester';
+  // Compare as strings to handle MongoDB ObjectId types
+  const canAssignToMe = ['Agent', 'Mission_Admin', 'HQ_Super_Admin'].includes(user?.role)
+    && ticket?.status !== 'Resolved'
+    && ticket?.status !== 'Closed'
+    && String(ticket?.assigned_agent ?? '') !== String(user?.id ?? 'x');
+  const canAssignAgent = isAdmin
+    && ticket?.status !== 'Resolved'
+    && ticket?.status !== 'Closed';
 
   if (isLoading) return <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>;
   if (error) return <Alert severity="error">Error loading ticket: {error.message}</Alert>;
@@ -94,9 +168,30 @@ const TicketDetail = () => {
         <Typography variant="h5" sx={{ flexGrow: 1 }}>
           {ticket.ticket_number} — {ticket.title}
         </Typography>
-        {canChangeStatus && (
-          <Button variant="outlined" onClick={() => { setNewStatus(ticket.status); setStatusDialog(true); }}>
+      {canChangeStatus && (
+          <Button variant="outlined" onClick={() => { setNewStatus(ticket.status); setNewStatusComment(''); setStatusDialog(true); }}>
             Update Status
+          </Button>
+        )}
+        {canAssignAgent && (
+          <Button
+            variant="outlined"
+            color="primary"
+            startIcon={<AssignmentInd />}
+            onClick={() => { setSelectedAgent(ticket.assigned_agent || ''); setAssignDialog(true); }}
+          >
+            Assign Agent
+          </Button>
+        )}
+        {canAssignToMe && (
+          <Button
+            variant="outlined"
+            color="success"
+            startIcon={<PersonAdd />}
+            onClick={() => assignToMeMutation.mutate()}
+            disabled={assignToMeMutation.isLoading}
+          >
+            Assign to Me
           </Button>
         )}
         {canEscalate && !ticket.escalated_to_hq && (
@@ -193,12 +288,12 @@ const TicketDetail = () => {
                 </Box>
                 <Divider />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="body2" color="text.secondary">Requester</Typography>
-                  <Typography variant="body2">{ticket.requester_name}</Typography>
+                  <Typography variant="body2" color="text.secondary">Submitted By</Typography>
+                  <Typography variant="body2" align="right" sx={{ maxWidth: 160 }}>{ticket.submission_display}</Typography>
                 </Box>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Assigned To</Typography>
-                  <Typography variant="body2">{ticket.agent_name || 'Unassigned'}</Typography>
+                  <Typography variant="body2">{ticket.agent_name || <span style={{ color: '#9e9e9e' }}>Unassigned</span>}</Typography>
                 </Box>
                 <Divider />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -229,20 +324,27 @@ const TicketDetail = () => {
           <FormControl fullWidth sx={{ mt: 1, mb: 2 }}>
             <InputLabel>New Status</InputLabel>
             <Select value={newStatus} label="New Status" onChange={(e) => setNewStatus(e.target.value)}>
-              <MenuItem value="Open">Open</MenuItem>
-              <MenuItem value="Assigned">Assigned</MenuItem>
-              <MenuItem value="In_Progress">In Progress</MenuItem>
-              <MenuItem value="Resolved">Resolved</MenuItem>
-              <MenuItem value="Closed">Closed</MenuItem>
+              {getValidNextStatuses(ticket?.status).map(s => (
+                <MenuItem key={s} value={s}>{s.replace('_', ' ')}</MenuItem>
+              ))}
             </Select>
           </FormControl>
+          <TextField
+            fullWidth
+            multiline
+            rows={2}
+            label="Comment (optional)"
+            value={newStatusComment}
+            onChange={(e) => setNewStatusComment(e.target.value)}
+            placeholder="Add a note about this status change..."
+          />
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setStatusDialog(false)}>Cancel</Button>
           <Button
             variant="contained"
-            onClick={() => updateStatusMutation.mutate({ status: newStatus, comment: '' })}
-            disabled={updateStatusMutation.isLoading}
+            onClick={() => updateStatusMutation.mutate({ status: newStatus, comment: newStatusComment })}
+            disabled={!newStatus || updateStatusMutation.isLoading}
           >
             Update
           </Button>
@@ -273,6 +375,40 @@ const TicketDetail = () => {
             disabled={!escalateReason.trim() || escalateMutation.isLoading}
           >
             Escalate
+          </Button>
+        </DialogActions>
+      </Dialog>
+      {/* Assign Agent Dialog */}
+      <Dialog open={assignDialog} onClose={() => setAssignDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Assign Ticket to Agent</DialogTitle>
+        <DialogContent>
+          <FormControl fullWidth sx={{ mt: 1 }}>
+            <InputLabel>Select Agent / Admin</InputLabel>
+            <Select
+              value={selectedAgent}
+              label="Select Agent / Admin"
+              onChange={(e) => setSelectedAgent(e.target.value)}
+            >
+              <MenuItem value="">— Unassign —</MenuItem>
+              {agentsList.map((a) => (
+                <MenuItem key={a.id} value={a.id}>
+                  {a.full_name || `${a.first_name} ${a.last_name}`}
+                  <Typography variant="caption" color="text.secondary" sx={{ ml: 1 }}>
+                    ({a.role?.replace('_', ' ')} · {a.department || 'No dept'})
+                  </Typography>
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAssignDialog(false)}>Cancel</Button>
+          <Button
+            variant="contained"
+            onClick={() => assignAgentMutation.mutate(selectedAgent || null)}
+            disabled={assignAgentMutation.isLoading}
+          >
+            Assign
           </Button>
         </DialogActions>
       </Dialog>

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { Box, CircularProgress } from '@mui/material';
+import { Box, CircularProgress, Toolbar } from '@mui/material';
 import Navbar from './components/Layout/Navbar';
 import Sidebar from './components/Layout/Sidebar';
 import Login from './pages/Auth/Login';
@@ -16,7 +16,6 @@ import Profile from './pages/Profile/Profile';
 import ProtectedRoute from './components/Auth/ProtectedRoute';
 import authService from './services/authService';
 
-const DRAWER_WIDTH = 240;
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -65,12 +64,12 @@ function App() {
         sx={{
           flexGrow: 1,
           p: 3,
-          mt: 8,
-          ml: `${DRAWER_WIDTH}px`,
           minHeight: '100vh',
           backgroundColor: 'background.default',
+          minWidth: 0, // prevent flex overflow
         }}
       >
+        <Toolbar />{/* spacer so content clears the fixed AppBar */}
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/login" element={<Navigate to="/dashboard" replace />} />

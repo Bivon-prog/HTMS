@@ -37,7 +37,20 @@ const Missions = () => {
       field: 'working_hours', headerName: 'Working Hours', width: 160,
       valueGetter: (p) => `${p.row.work_start_time || ''} – ${p.row.work_end_time || ''}`,
     },
-    { field: 'mission_admin_id', headerName: 'Mission Admin ID', width: 150 },
+    {
+      field: 'mission_admin_id', headerName: 'Mission Admin', width: 210,
+      renderCell: (p) => {
+        const name = p.row.mission_admin_name;
+        const id = p.row.mission_admin_id;
+        if (!id) return <Typography variant="caption" color="text.disabled">— Unassigned</Typography>;
+        return (
+          <Box>
+            <Typography variant="body2" sx={{ lineHeight: 1.2 }}>{name || 'Unknown'}</Typography>
+            <Typography variant="caption" color="text.secondary" sx={{ fontFamily: 'monospace' }}>{id}</Typography>
+          </Box>
+        );
+      },
+    },
     {
       field: 'status', headerName: 'Status', width: 100,
       renderCell: (p) => <Chip label={p.value} color={p.value === 'Active' ? 'success' : 'default'} size="small" />,

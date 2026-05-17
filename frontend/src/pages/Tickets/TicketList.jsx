@@ -1,212 +1,172 @@
 import React, { useState, useEffect } from 'react';
 import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Chip,
-  Stack,
-  Pagination,
-  CircularProgress,
-  Alert,
+  Box, Card, CardContent, Typography, Button, TextField,
+  Select, MenuItem, FormControl, InputLabel, Chip, Stack,
+  CircularProgress, Alert, Tab, Tabs, Badge,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { useQuery } from 'react-query';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Add, Search, FilterList } from '@mui/icons-material';
-import toast from 'react-hot-toast';
 import ticketService from '../../services/ticketService';
+import authService from '../../services/authService';
+
+const STATUS_COLORS = {
+  Open: 'default', Assigned: 'info', In_Progress: 'warning',
+  Resolved: 'success', Closed: 'secondary',
+};
+const PRIORITY_COLORS = {
+  Low: 'success', Medium: 'info', High: 'warning', Critical: 'error',
+};
 
 const TicketList = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const user = authService.getCurrentUser();
+  const isAgent = ['Agent', 'Mission_Admin', 'HQ_Super_Admin'].includes(user?.role);
+
+  // Read queue param from URL (?queue=mine | ?queue=open)
+  const queueParam = new URLSearchParams(location.search).get('queue') || 'all';
+  const [activeTab, setActiveTab] = useState(queueParam);
+
   const [filters, setFilters] = useState({
-    search: '',
-    status: '',
-    priority: '',
-    category: '',
-    page: 1,
+    search: '', status: '', priority: '', page: 1,
   });
 
-  const {
-    data: ticketsData,
-    isLoading,
-    error,
-    refetch,
-  } = useQuery(
-    ['tickets', filters],
-    () => ticketService.getTickets(filters),
-    {
-      keepPreviousData: true,
-    }
-  );
+  // Sync tab when URL changes (sidebar clicks)
+  useEffect(() => {
+    setActiveTab(queueParam);
+    setFilters(f => ({ ...f, page: 1 }));
+  }, [queueParam]);
 
-  const columns = [
-    {
-      field: 'ticket_number',
-      headerName: 'Ticket #',
-      width: 140,
-      renderCell: (params) => (
-        <Button
-          variant="text"
-          color="primary"
-          onClick={() => navigate(`/tickets/${params.row.id}`)}
-        >
-          {params.value}
-        </Button>
-      ),
-    },
-    {
-      field: 'title',
-      headerName: 'Title',
-      width: 250,
-      flex: 1,
-    },
-    {
-      field: 'status',
-      headerName: 'Status',
-      width: 120,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={getStatusColor(params.value)}
-          size="small"
-        />
-      ),
-    },
-    {
-      field: 'priority',
-      headerName: 'Priority',
-      width: 100,
-      renderCell: (params) => (
-        <Chip
-          label={params.value}
-          color={getPriorityColor(params.value)}
-          size="small"
-        />
-      ),
-    },
-    {
-      field: 'category_name',
-      headerName: 'Category',
-      width: 120,
-    },
-    {
-      field: 'requester_name',
-      headerName: 'Requester',
-      width: 150,
-    },
-    {
-      field: 'agent_name',
-      headerName: 'Assigned Agent',
-      width: 150,
-    },
-    {
-      field: 'created_at',
-      headerName: 'Created',
-      width: 120,
-      renderCell: (params) => new Date(params.value).toLocaleDateString(),
-    },
-    {
-      field: 'is_overdue',
-      headerName: 'Overdue',
-      width: 80,
-      renderCell: (params) => (
-        params.value && (
-          <Chip label="Overdue" color="error" size="small" />
-        )
-      ),
-    },
-  ];
-
-  const getStatusColor = (status) => {
-    switch (status) {
-      case 'Open': return 'default';
-      case 'Assigned': return 'info';
-      case 'In_Progress': return 'warning';
-      case 'Resolved': return 'success';
-      case 'Closed': return 'secondary';
-      default: return 'default';
-    }
+  const buildParams = () => {
+    const p = { ...filters };
+    if (activeTab === 'mine') p.assigned_agent = user?.id;
+    if (activeTab === 'open') p.status = 'Open';
+    return p;
   };
 
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'Low': return 'success';
-      case 'Medium': return 'info';
-      case 'High': return 'warning';
-      case 'Critical': return 'error';
-      default: return 'default';
-    }
+  const { data: ticketsData, isLoading, error, refetch } = useQuery(
+    ['tickets', filters, activeTab],
+    () => ticketService.getTickets(buildParams()),
+    { keepPreviousData: true }
+  );
+
+  const handleTabChange = (_, val) => {
+    setActiveTab(val);
+    setFilters(f => ({ ...f, status: '', page: 1 }));
+    // Update URL without full navigation
+    const params = val === 'all' ? '' : `?queue=${val}`;
+    navigate(`/tickets${params}`, { replace: true });
   };
 
   const handleFilterChange = (field, value) => {
-    setFilters(prev => ({
-      ...prev,
-      [field]: value,
-      page: 1, // Reset to first page when filters change
-    }));
+    setFilters(prev => ({ ...prev, [field]: value, page: 1 }));
   };
 
-  const handlePageChange = (newPage) => {
-    setFilters(prev => ({
-      ...prev,
-      page: newPage,
-    }));
-  };
+  const columns = [
+    {
+      field: 'ticket_number', headerName: 'Ticket #', width: 140,
+      renderCell: (p) => (
+        <Button variant="text" color="primary" onClick={() => navigate(`/tickets/${p.row.id}`)}>
+          {p.value}
+        </Button>
+      ),
+    },
+    { field: 'title', headerName: 'Title', width: 250, flex: 1 },
+    {
+      field: 'status', headerName: 'Status', width: 120,
+      renderCell: (p) => (
+        <Chip label={p.value?.replace('_', ' ')} color={STATUS_COLORS[p.value] || 'default'} size="small" />
+      ),
+    },
+    {
+      field: 'priority', headerName: 'Priority', width: 100,
+      renderCell: (p) => (
+        <Chip label={p.value} color={PRIORITY_COLORS[p.value] || 'default'} size="small" />
+      ),
+    },
+    { field: 'category_name', headerName: 'Category', width: 120 },
+    { field: 'mission_name', headerName: 'Mission', width: 150 },
+    {
+      field: 'submission_display', headerName: 'Submitted By', width: 180,
+      renderCell: (p) => (
+        <Typography variant="body2" noWrap title={p.value}>{p.value}</Typography>
+      ),
+    },
+    {
+      field: 'agent_name', headerName: 'Assigned Agent', width: 150,
+      renderCell: (p) => p.value
+        ? <Typography variant="body2">{p.value}</Typography>
+        : <Typography variant="caption" color="text.disabled">Unassigned</Typography>,
+    },
+    {
+      field: 'created_at', headerName: 'Created', width: 110,
+      renderCell: (p) => new Date(p.value).toLocaleDateString(),
+    },
+    {
+      field: 'is_overdue', headerName: 'SLA', width: 80,
+      renderCell: (p) => p.value
+        ? <Chip label="Overdue" color="error" size="small" />
+        : null,
+    },
+  ];
 
   if (error) {
-    return (
-      <Alert severity="error" sx={{ mt: 2 }}>
-        Error loading tickets: {error.message}
-      </Alert>
-    );
+    return <Alert severity="error" sx={{ mt: 2 }}>Error loading tickets: {error.message}</Alert>;
   }
+
+  const rows = ticketsData?.results || [];
+  const totalCount = ticketsData?.count || 0;
 
   return (
     <Box>
+      {/* Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h4" component="h1">
-          Tickets
-        </Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => navigate('/tickets/create')}
-        >
+        <Typography variant="h4" component="h1">Tickets</Typography>
+        <Button variant="contained" startIcon={<Add />} onClick={() => navigate('/tickets/create')}>
           Create Ticket
         </Button>
       </Box>
 
+      {/* Queue Tabs — only for agents & admins */}
+      {isAgent && (
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+          <Tabs value={activeTab} onChange={handleTabChange}>
+            <Tab label="All Tickets" value="all" />
+            <Tab
+              label={
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  My Queue
+                  {activeTab === 'mine' && rows.length > 0 && (
+                    <Badge badgeContent={totalCount} color="primary" max={99} />
+                  )}
+                </Box>
+              }
+              value="mine"
+            />
+            <Tab label="Open Queue" value="open" />
+          </Tabs>
+        </Box>
+      )}
+
       {/* Filters */}
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Typography variant="h6" gutterBottom>
-            Filters
-          </Typography>
-          <Stack direction="row" spacing={2} alignItems="center">
+          <Stack direction="row" spacing={2} alignItems="center" flexWrap="wrap">
             <TextField
               placeholder="Search tickets..."
               value={filters.search}
               onChange={(e) => handleFilterChange('search', e.target.value)}
-              InputProps={{
-                startAdornment: <Search />,
-              }}
-              sx={{ minWidth: 250 }}
+              InputProps={{ startAdornment: <Search sx={{ mr: 0.5, color: 'text.secondary' }} /> }}
+              sx={{ minWidth: 240 }}
+              size="small"
             />
-            
-            <FormControl sx={{ minWidth: 150 }}>
+            <FormControl sx={{ minWidth: 130 }} size="small">
               <InputLabel>Status</InputLabel>
-              <Select
-                value={filters.status}
-                label="Status"
+              <Select value={filters.status} label="Status"
                 onChange={(e) => handleFilterChange('status', e.target.value)}
-              >
+                disabled={activeTab === 'open'}>
                 <MenuItem value="">All</MenuItem>
                 <MenuItem value="Open">Open</MenuItem>
                 <MenuItem value="Assigned">Assigned</MenuItem>
@@ -215,14 +175,10 @@ const TicketList = () => {
                 <MenuItem value="Closed">Closed</MenuItem>
               </Select>
             </FormControl>
-
-            <FormControl sx={{ minWidth: 150 }}>
+            <FormControl sx={{ minWidth: 120 }} size="small">
               <InputLabel>Priority</InputLabel>
-              <Select
-                value={filters.priority}
-                label="Priority"
-                onChange={(e) => handleFilterChange('priority', e.target.value)}
-              >
+              <Select value={filters.priority} label="Priority"
+                onChange={(e) => handleFilterChange('priority', e.target.value)}>
                 <MenuItem value="">All</MenuItem>
                 <MenuItem value="Low">Low</MenuItem>
                 <MenuItem value="Medium">Medium</MenuItem>
@@ -230,28 +186,12 @@ const TicketList = () => {
                 <MenuItem value="Critical">Critical</MenuItem>
               </Select>
             </FormControl>
-
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Category</InputLabel>
-              <Select
-                value={filters.category}
-                label="Category"
-                onChange={(e) => handleFilterChange('category', e.target.value)}
-              >
-                <MenuItem value="">All</MenuItem>
-                <MenuItem value="1">IT</MenuItem>
-                <MenuItem value="2">HR</MenuItem>
-                <MenuItem value="3">Facilities</MenuItem>
-              </Select>
-            </FormControl>
-
-            <Button
-              variant="outlined"
-              startIcon={<FilterList />}
-              onClick={() => refetch()}
-            >
-              Apply Filters
+            <Button variant="outlined" startIcon={<FilterList />} onClick={() => refetch()} size="small">
+              Refresh
             </Button>
+            <Typography variant="caption" color="text.secondary" sx={{ ml: 'auto !important' }}>
+              {totalCount} ticket{totalCount !== 1 ? 's' : ''}
+            </Typography>
           </Stack>
         </CardContent>
       </Card>
@@ -263,9 +203,19 @@ const TicketList = () => {
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}>
               <CircularProgress />
             </Box>
+          ) : rows.length === 0 ? (
+            <Box sx={{ p: 4, textAlign: 'center' }}>
+              <Typography color="text.secondary">
+                {activeTab === 'mine'
+                  ? 'No tickets assigned to you.'
+                  : activeTab === 'open'
+                  ? 'No open tickets in your queue.'
+                  : 'No tickets found.'}
+              </Typography>
+            </Box>
           ) : (
             <DataGrid
-              rows={ticketsData?.results || []}
+              rows={rows}
               columns={columns}
               pageSize={20}
               rowsPerPageOptions={[20]}
@@ -273,22 +223,11 @@ const TicketList = () => {
               autoHeight
               getRowId={(row) => row.id}
               sx={{ border: 'none' }}
+              onPageChange={(page) => handleFilterChange('page', page + 1)}
             />
           )}
         </CardContent>
       </Card>
-
-      {/* Pagination */}
-      {ticketsData?.count > 0 && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-          <Pagination
-            count={Math.ceil(ticketsData.count / 20)}
-            page={filters.page}
-            onChange={(e, page) => handlePageChange(page)}
-            color="primary"
-          />
-        </Box>
-      )}
     </Box>
   );
 };
