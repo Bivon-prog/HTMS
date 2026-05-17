@@ -11,7 +11,7 @@ from .serializers import MissionSerializer, TicketCategorySerializer
 from django.db.models import Case, When, Value, IntegerField
 
 class MissionListView(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated, IsHQSuperAdmin]
     serializer_class = MissionSerializer
     pagination_class = None
     filterset_fields = ['region', 'status']

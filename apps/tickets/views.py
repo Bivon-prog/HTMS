@@ -29,7 +29,7 @@ from .serializers import (
 class TicketListView(generics.ListCreateAPIView):
     permission_classes = [permissions.IsAuthenticated]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
-    filterset_fields = ['status', 'priority', 'category', 'mission']
+    filterset_fields = ['status', 'priority', 'category', 'mission', 'assigned_agent']
     search_fields = ['title', 'description', 'ticket_number']
     ordering_fields = ['created_at', 'sla_due_date', 'priority']
     ordering = ['-created_at']
@@ -300,7 +300,7 @@ def escalate_ticket(request, ticket_id):
         user=request.user,
         action='Escalated',
         entity_type='ticket',
-        entity_id=ticket.id,
+        entity_id=str(ticket.id),
         new_values={'escalated_to_hq': True, 'escalation_reason': reason},
         ip_address=request.META.get('REMOTE_ADDR'),
     )

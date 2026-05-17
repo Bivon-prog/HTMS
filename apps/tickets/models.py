@@ -191,7 +191,7 @@ class AuditLog(models.Model):
     )
     action = models.CharField(max_length=50, choices=ACTION_CHOICES)
     entity_type = models.CharField(max_length=50)  # 'ticket', 'user', 'mission', etc.
-    entity_id = models.BigIntegerField()  # ID of the related entity (ticket, user, etc.)
+    entity_id = models.CharField(max_length=64)  # supports both int IDs and MongoDB ObjectId strings
     old_values = models.JSONField(null=True, blank=True)
     new_values = models.JSONField(null=True, blank=True)
     ip_address = models.GenericIPAddressField(null=True, blank=True)

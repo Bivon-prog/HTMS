@@ -15,7 +15,6 @@ def agent_ticket_visibility_q(user: User) -> Q:
         dept_queue = Q(
             mission=user.mission,
             category__routing_department=dept,
-            status__in=['Open', 'Assigned', 'In_Progress'],
         )
         return assigned | dept_queue
 
@@ -48,16 +47,15 @@ def ticket_list_for_user(user: User):
     ).prefetch_related('comments', 'attachments')
 
     if user.role == 'HQ_Super_Admin':
-        base = qs
-    elif user.role == 'Agent' and not user.mission_id:
-        base = qs.filter(agent_ticket_visibility_q(user))
-    elif user.mission_id:
-        base = qs.filter(mission=user.mission)
-    else:
-        return qs.none()
-
+        return qs
+    
+    if user.role == 'Agent':
+        return qs.filter(agent_ticket_visibility_q(user))
+    
+    if user.role == 'Mission_Admin':
+        return qs.filter(mission=user.mission)
+    
     if user.role == 'Requester':
-        return base.filter(Q(requester=user) | Q(beneficiary=user))
-    if user.role == 'Agent' and user.mission_id:
-        return base.filter(agent_ticket_visibility_q(user))
-    return base
+        return qs.filter(Q(requester=user) | Q(beneficiary=user))
+    
+    return qs.none()

@@ -161,8 +161,8 @@ const Sidebar = () => {
             </ListItem>
           )}
 
-          {/* Missions — Mission Admin + HQ */}
-          {isAdmin && (
+          {/* Missions — HQ only */}
+          {isHQ && (
             <ListItem disablePadding>
               <ListItemButton selected={isActive('/missions')} onClick={() => go('/missions')}>
                 <ListItemIcon><MissionIcon fontSize="small" /></ListItemIcon>

@@ -125,7 +125,7 @@ class TicketSerializer(serializers.ModelSerializer):
             user=user,
             action='Created',
             entity_type='ticket',
-            entity_id=instance.id,
+            entity_id=str(instance.id),
             new_values={'ticket_number': instance.ticket_number, 'title': instance.title},
             ip_address=request.META.get('REMOTE_ADDR'),
         )
@@ -137,7 +137,7 @@ class TicketSerializer(serializers.ModelSerializer):
                 [instance.beneficiary],
                 f'Ticket {instance.ticket_number} was raised on your behalf: {instance.title}',
                 entity_type='ticket',
-                entity_id=instance.id,
+                entity_id=str(instance.id),
             )
 
         return instance
@@ -183,7 +183,7 @@ class TicketStatusUpdateSerializer(serializers.ModelSerializer):
             user=self.context['request'].user,
             action='Status Changed',
             entity_type='ticket',
-            entity_id=instance.id,
+            entity_id=str(instance.id),
             old_values={'status': old_status},
             new_values={'status': instance.status},
             ip_address=self.context['request'].META.get('REMOTE_ADDR'),
@@ -205,9 +205,9 @@ class TicketAssignmentSerializer(serializers.ModelSerializer):
             user=self.context['request'].user,
             action='Assigned',
             entity_type='ticket',
-            entity_id=instance.id,
-            old_values={'assigned_agent': old_agent.id if old_agent else None},
-            new_values={'assigned_agent': instance.assigned_agent.id if instance.assigned_agent else None},
+            entity_id=str(instance.id),
+            old_values={'assigned_agent': str(old_agent.id) if old_agent else None},
+            new_values={'assigned_agent': str(instance.assigned_agent.id) if instance.assigned_agent else None},
             ip_address=self.context['request'].META.get('REMOTE_ADDR'),
         )
 

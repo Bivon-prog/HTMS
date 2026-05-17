@@ -37,7 +37,7 @@ class Command(BaseCommand):
                 user=actor,
                 action='Escalated',
                 entity_type='ticket',
-                entity_id=ticket.id,
+                entity_id=str(ticket.id),
                 new_values={'automatic': True},
                 ip_address=None,
             )

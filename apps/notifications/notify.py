@@ -55,4 +55,4 @@ def notify_ticket_routing(ticket):
         Q(role='Mission_Admin')
         | Q(role='Agent', department=ticket.category.routing_department)
     )
-    notify_users(event, list(recipients), msg, entity_type='ticket', entity_id=ticket.id)
+    notify_users(event, list(recipients), msg, entity_type='ticket', entity_id=str(ticket.id))

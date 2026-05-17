@@ -40,7 +40,7 @@ class Command(BaseCommand):
                 user=actor,
                 action='Closed',
                 entity_type='ticket',
-                entity_id=ticket.id,
+                entity_id=str(ticket.id),
                 new_values={'auto_closed': True, 'reason': f'Resolved > {days} days without confirmation'},
                 ip_address=None,
             )
