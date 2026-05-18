@@ -16,11 +16,11 @@ class MissionSerializer(serializers.ModelSerializer):
     class Meta:
         model = Mission
         fields = [
-            'id', 'name', 'country', 'city', 'region', 'timezone',
+            'id', 'mission_id', 'name', 'country', 'city', 'region', 'timezone',
             'working_week_start', 'working_week_end', 'work_start_time', 'work_end_time',
-            'status', 'mission_admin_id', 'mission_admin_name', 'created_at', 'updated_at',
+            'status', 'mission_admin_id', 'mission_admin_name', 'kenyan_working_hours', 'created_at', 'updated_at',
         ]
-        read_only_fields = ['created_at', 'updated_at']
+        read_only_fields = ['created_at', 'updated_at', 'mission_id', 'kenyan_working_hours']
 
     def _get_admin(self, obj):
         from apps.authentication.models import User

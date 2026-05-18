@@ -56,10 +56,44 @@ class User(AbstractUser):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     last_login_ip = models.GenericIPAddressField(null=True, blank=True)
+    
+    user_id = models.CharField(max_length=30, unique=True, null=True, blank=True)
+    seq_number = models.IntegerField(unique=True, null=True, blank=True)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['first_name', 'last_name']
     objects = UserManager()
+
+    def save(self, *args, **kwargs):
+        if not self.user_id:
+            if self.role == 'HQ_Super_Admin':
+                last_super = self.__class__.objects.filter(role='HQ_Super_Admin').order_by('-seq_number').first()
+                if last_super and last_super.seq_number:
+                    self.seq_number = last_super.seq_number + 1
+                else:
+                    self.seq_number = 1
+                
+                if self.seq_number > 100:
+                    raise ValueError("Super Admin sequence exceeded 100")
+                
+                prefix = "HTMS/ADM/"
+            else:
+                last_user = self.__class__.objects.exclude(role='HQ_Super_Admin').order_by('-seq_number').first()
+                if last_user and last_user.seq_number:
+                    self.seq_number = max(last_user.seq_number + 1, 101)
+                else:
+                    self.seq_number = 101
+                
+                if self.role == 'Agent':
+                    prefix = "HTMS/AGT/"
+                elif self.role == 'Mission_Admin':
+                    prefix = "HTMS/MADM/"
+                else:
+                    prefix = "HTMS/USR/"
+            
+            self.user_id = f"{prefix}{self.seq_number:04d}"
+            
+        super().save(*args, **kwargs)
 
     class Meta:
         db_table = 'users'

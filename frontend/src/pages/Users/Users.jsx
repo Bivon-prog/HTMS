@@ -61,6 +61,7 @@ const Users = () => {
   );
 
   const columns = [
+    { field: 'user_id', headerName: 'User ID', width: 150 },
     { field: 'full_name', headerName: 'Name', width: 200 },
     { field: 'email', headerName: 'Email', width: 220 },
     {

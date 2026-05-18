@@ -78,6 +78,9 @@ const CreateTicket = () => {
     };
     if (data.linked_asset) payload.linked_asset = data.linked_asset;
     if (data.beneficiary) payload.beneficiary = data.beneficiary;
+    if (data.department_from) payload.department_from = data.department_from;
+    if (data.department_to) payload.department_to = data.department_to;
+    if (data.room_number) payload.room_number = data.room_number;
     createMutation.mutate(payload);
   };
 
@@ -164,6 +167,36 @@ const CreateTicket = () => {
                     )}
                   />
                 </FormControl>
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  {...register('department_from')}
+                  fullWidth
+                  label="Department From"
+                  error={!!errors.department_from}
+                  helperText={errors.department_from?.message}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  {...register('department_to')}
+                  fullWidth
+                  label="Department To"
+                  error={!!errors.department_to}
+                  helperText={errors.department_to?.message}
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  {...register('room_number')}
+                  fullWidth
+                  label="Room Number"
+                  error={!!errors.room_number}
+                  helperText={errors.room_number?.message}
+                />
               </Grid>
 
               <Grid item xs={12}>

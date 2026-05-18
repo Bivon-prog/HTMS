@@ -74,6 +74,10 @@ class Ticket(models.Model):
     mission = models.ForeignKey(Mission, on_delete=models.PROTECT, related_name='tickets')
     linked_asset = models.ForeignKey('assets.Asset', on_delete=models.SET_NULL, null=True, blank=True)
     
+    department_from = models.CharField(max_length=100, blank=True, null=True)
+    department_to = models.CharField(max_length=100, blank=True, null=True)
+    room_number = models.CharField(max_length=50, blank=True, null=True)
+    
     escalated_to_hq = models.BooleanField(default=False)
     escalation_reason = models.TextField(blank=True)
     

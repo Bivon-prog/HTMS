@@ -28,6 +28,9 @@ class Mission(models.Model):
         ('Inactive', 'Inactive'),
     ])
 
+    mission_id = models.CharField(max_length=50, blank=True, null=True, unique=True)
+    seq_number = models.IntegerField(blank=True, null=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -39,6 +42,37 @@ class Mission(models.Model):
 
     def __str__(self):
         return f'{self.name} - {self.city}, {self.country}'
+
+    def save(self, *args, **kwargs):
+        if not self.mission_id:
+            # Find the highest sequence number
+            from apps.missions.models import Mission as MissionModel
+            last_mission = MissionModel.objects.order_by('-seq_number').first()
+            next_seq = 1
+            if last_mission and last_mission.seq_number:
+                next_seq = last_mission.seq_number + 1
+            
+            self.seq_number = next_seq
+            self.mission_id = f"HTMS/MSN/{next_seq:04d}"
+            
+        super().save(*args, **kwargs)
+
+    @property
+    def kenyan_working_hours(self):
+        import pytz
+        from datetime import datetime, time
+        
+        today = datetime.now().date()
+        tz = pytz.timezone(str(self.timezone))
+        
+        start_dt = tz.localize(datetime.combine(today, self.work_start_time))
+        end_dt = tz.localize(datetime.combine(today, self.work_end_time))
+        
+        ke_tz = pytz.timezone('Africa/Nairobi')
+        start_ke = start_dt.astimezone(ke_tz)
+        end_ke = end_dt.astimezone(ke_tz)
+        
+        return f"{start_ke.strftime('%I:%M %p')} to {end_ke.strftime('%I:%M %p')}"
 
     def is_working_hours(self, datetime_obj=None):
         from django.utils import timezone

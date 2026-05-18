@@ -69,6 +69,7 @@ class TicketSerializer(serializers.ModelSerializer):
             'sla_due_date', 'resolved_date', 'closed_date',
             'created_at', 'updated_at', 'comments', 'attachments',
             'comment_count', 'is_overdue',
+            'department_from', 'department_to', 'room_number',
         ]
         read_only_fields = [
             'ticket_number', 'requester', 'beneficiary', 'resolved_date', 'closed_date',
@@ -151,6 +152,7 @@ class TicketCreateSerializer(TicketSerializer):
     class Meta(TicketSerializer.Meta):
         fields = [
             'title', 'description', 'category', 'priority', 'linked_asset', 'beneficiary',
+            'department_from', 'department_to', 'room_number',
         ]
         read_only_fields = [
             'ticket_number', 'requester', 'resolved_date', 'closed_date',

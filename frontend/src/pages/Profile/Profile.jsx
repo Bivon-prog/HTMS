@@ -59,6 +59,7 @@ const Profile = () => {
               <Typography variant="h6">{user?.first_name} {user?.last_name}</Typography>
               <Typography variant="body2" color="text.secondary">{user?.email}</Typography>
               <Box sx={{ display: 'flex', gap: 1, mt: 0.5 }}>
+                {user?.user_id && <Chip label={`ID: ${user.user_id}`} size="small" color="primary" variant="outlined" />}
                 <Chip label={user?.role?.replace('_', ' ')} color={ROLE_COLORS[user?.role] || 'default'} size="small" />
                 {user?.department && <Chip label={user.department} size="small" variant="outlined" />}
                 {user?.mission_name && <Chip label={user.mission_name} size="small" variant="outlined" />}

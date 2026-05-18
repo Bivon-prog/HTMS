@@ -286,6 +286,18 @@ const TicketDetail = () => {
                   <Typography variant="body2" color="text.secondary">Mission</Typography>
                   <Typography variant="body2">{ticket.mission_name}</Typography>
                 </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Dept From</Typography>
+                  <Typography variant="body2">{ticket.department_from || 'N/A'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Dept To</Typography>
+                  <Typography variant="body2">{ticket.department_to || 'N/A'}</Typography>
+                </Box>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <Typography variant="body2" color="text.secondary">Room</Typography>
+                  <Typography variant="body2">{ticket.room_number || 'N/A'}</Typography>
+                </Box>
                 <Divider />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="body2" color="text.secondary">Submitted By</Typography>

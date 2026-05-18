@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import {
   Box, Card, CardContent, Typography, Button, TextField,
   Chip, CircularProgress, Alert, Stack, FormControl,
-  InputLabel, Select, MenuItem,
+  InputLabel, Select, MenuItem, Dialog, DialogTitle,
+  DialogContent, DialogActions,
 } from '@mui/material';
 import { DataGrid } from '@mui/x-data-grid';
 import { Search } from '@mui/icons-material';
@@ -21,6 +22,8 @@ api.interceptors.request.use((config) => {
 const Missions = () => {
   const user = authService.getCurrentUser();
   const [filters, setFilters] = useState({ search: '', region: '', status: '' });
+  const [selectedMission, setSelectedMission] = useState(null);
+  const [detailDialog, setDetailDialog] = useState(false);
 
   const { data, isLoading, error } = useQuery(
     ['missions', filters],
@@ -28,11 +31,13 @@ const Missions = () => {
   );
 
   const columns = [
+    { field: 'mission_id', headerName: 'Mission ID', width: 150 },
     { field: 'name', headerName: 'Mission Name', width: 220 },
     { field: 'city', headerName: 'City', width: 130 },
     { field: 'country', headerName: 'Country', width: 150 },
     { field: 'region', headerName: 'Region', width: 130 },
     { field: 'timezone', headerName: 'Timezone', width: 180 },
+    { field: 'kenyan_working_hours', headerName: 'Working Time (EAT)', width: 200 },
     {
       field: 'working_hours', headerName: 'Working Hours', width: 160,
       valueGetter: (p) => `${p.row.work_start_time || ''} – ${p.row.work_end_time || ''}`,
@@ -107,10 +112,61 @@ const Missions = () => {
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 4 }}><CircularProgress /></Box>
           ) : (
             <DataGrid rows={rows} columns={columns} pageSize={25} rowsPerPageOptions={[25, 50]}
-              disableSelectionOnClick autoHeight sx={{ border: 'none' }} />
+              disableSelectionOnClick autoHeight sx={{ border: 'none', cursor: 'pointer' }}
+              onRowClick={(params) => { setSelectedMission(params.row); setDetailDialog(true); }} />
           )}
         </CardContent>
       </Card>
+
+      {/* Mission Detail Dialog */}
+      <Dialog open={detailDialog} onClose={() => setDetailDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Mission Details</DialogTitle>
+        <DialogContent>
+          {selectedMission && (
+            <Stack spacing={2} sx={{ mt: 1 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Mission ID</Typography>
+                <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>{selectedMission.mission_id}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Name</Typography>
+                <Typography variant="body2">{selectedMission.name}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Location</Typography>
+                <Typography variant="body2">{selectedMission.city}, {selectedMission.country}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Region</Typography>
+                <Typography variant="body2">{selectedMission.region}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Timezone</Typography>
+                <Typography variant="body2">{selectedMission.timezone}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Local Working Hours</Typography>
+                <Typography variant="body2">{selectedMission.work_start_time} – {selectedMission.work_end_time}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Kenyan Working Hours</Typography>
+                <Typography variant="body2">{selectedMission.kenyan_working_hours}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Admin</Typography>
+                <Typography variant="body2">{selectedMission.mission_admin_name || 'Unassigned'}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Typography variant="body2" color="text.secondary">Status</Typography>
+                <Chip label={selectedMission.status} color={selectedMission.status === 'Active' ? 'success' : 'default'} size="small" />
+              </Box>
+            </Stack>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDetailDialog(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };
